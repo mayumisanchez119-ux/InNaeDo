@@ -35,7 +35,7 @@ const app = {
         this.renderAdminEventsTable();
         this.renderStudentsCrudTable();
         this.renderReportsTable();
-        this.loadSettingsForm();
+        this.loadSettingsForm();        // La consulta de alumnos es la pantalla de inicio del portal.        setTimeout(() => {            const defaultSection = document.getElementById('consulta');            if (defaultSection) {                window.history.replaceState(null, '', '#consulta');                defaultSection.scrollIntoView({ behavior: 'auto', block: 'start' });            }        }, 150);
 
         document.addEventListener('click', (e) => {
             const searchBox = document.querySelector('.hero-search-box');
@@ -630,7 +630,7 @@ const app = {
             this.renderReportsTable();
         } else if (tabName === 'settings') {
             document.getElementById('adminTabSettings').classList.add('active');
-            this.loadSettingsForm();
+            this.loadSettingsForm();        // La consulta de alumnos es la pantalla de inicio del portal.        setTimeout(() => {            const defaultSection = document.getElementById('consulta');            if (defaultSection) {                window.history.replaceState(null, '', '#consulta');                defaultSection.scrollIntoView({ behavior: 'auto', block: 'start' });            }        }, 150);
         }
     },
 
