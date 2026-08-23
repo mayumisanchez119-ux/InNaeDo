@@ -380,7 +380,7 @@ const app = {
 
         const totalEff = stats.totalPresent + (stats.totalLate * 0.8);
         const totalSes = (stats.totalPresent + stats.totalAbsent + stats.totalLate);
-        const avg = totalSes > 0 ? Math.round((totalEff / totalSes) * 100) : 92;
+        const avg = totalSes > 0 ? Math.round((totalEff / totalSes) * 100) : 0;
         if (elAttendance) elAttendance.textContent = `${avg}%`;
     },
 
