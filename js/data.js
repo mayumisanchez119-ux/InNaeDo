@@ -123,48 +123,7 @@ const INITIAL_STUDENTS = [
 ];
 
 // EVENTOS Y NOVEDADES INICIALES DEL CLUB INNAEDO
-const INITIAL_EVENTS = [
-    {
-        id: "evt_1",
-        title: "Ceremonia Hall de la Fama Taekwondo INNAEDO",
-        date: "2026-08-29",
-        time: "06:00 PM",
-        type: "evento", // "evento" | "aviso" | "suspension" | "examen" | "torneo"
-        location: "Auditorio Principal / Sede Central Dojang",
-        description: "Gran gala anual de premiación y exaltación a los practicantes, competidores y maestros más destacados de la temporada. ¡Los alumnos deben confirmar su asistencia para la reserva!",
-        allowRsvp: true,
-        rsvps: {
-            "stu_2": { studentId: "stu_2", name: "ANDRES RICARDO LINARES VANEGAS", status: "si", note: "Asistiré con dobok de gala y acudientes", date: "2026-08-15" },
-            "stu_3": { studentId: "stu_3", name: "KAROL SOFIA NIETO POVEDA", status: "si", note: "Confirmada con 2 acompañantes", date: "2026-08-15" },
-            "stu_36": { studentId: "stu_36", name: "DYLAN KEITH MONTIEL PARRA", status: "si", note: "Mesa técnica de evaluación", date: "2026-08-15" }
-        }
-    },
-    {
-        id: "evt_2",
-        title: "Jornada Especial de Combate (Kyorugi) y Poomsae",
-        date: "2026-08-22",
-        time: "03:30 PM",
-        type: "evento",
-        location: "Dojang Central - Tatami Principal",
-        description: "Entrenamiento unificado de todas las sedes (Bugalagrande, Niños y Adolescentes). Traer peto, casco y protecciones completas.",
-        allowRsvp: true,
-        rsvps: {
-            "stu_5": { studentId: "stu_5", name: "MIGUEL ANGEL ORTIZ ARIZA", status: "si", note: "Listo para combate", date: "2026-08-15" },
-            "stu_24": { studentId: "stu_24", name: "MATEO GARCIA RODRIGUEZ", status: "si", note: "Asiste grupo infantil", date: "2026-08-15" }
-        }
-    },
-    {
-        id: "evt_3",
-        title: "Aviso: Ajuste de Horarios por Día Festivo",
-        date: "2026-08-18",
-        time: "Todo el día",
-        type: "aviso",
-        location: "Todas las sedes",
-        description: "Informamos a toda la comunidad marcial que con motivo del día festivo no se realizarán clases presenciales. Retomamos entrenamientos en horario normal al día siguiente.",
-        allowRsvp: false,
-        rsvps: {}
-    }
-];
+const INITIAL_EVENTS = [];
 
 // Generar historial de asistencia simulado
 function generateInitialAttendance() {
