@@ -4,8 +4,8 @@
 
 const STORAGE_KEYS = {
     STUDENTS: "tkd_innaedo_students_v3",
-    ATTENDANCE: "tkd_innaedo_attendance_v3",
-    EVENTS: "tkd_innaedo_events_v3",
+    ATTENDANCE: "tkd_innaedo_attendance_v4",
+    EVENTS: "tkd_innaedo_events_v4",
     SETTINGS: "tkd_innaedo_settings_v3",
     AUTH_SESSION: "tkd_innaedo_auth_session_v3",
     ADMIN_CREDS: "tkd_innaedo_admin_creds_v3"
@@ -17,7 +17,7 @@ const StorageManager = {
             localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(INITIAL_STUDENTS));
         }
         if (!localStorage.getItem(STORAGE_KEYS.ATTENDANCE)) {
-            const initialAttendance = generateInitialAttendance();
+            const initialAttendance = {};
             localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(initialAttendance));
         }
         if (!localStorage.getItem(STORAGE_KEYS.EVENTS)) {
