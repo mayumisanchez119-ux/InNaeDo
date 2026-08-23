@@ -2,7 +2,7 @@
  * Gestor de Almacenamiento Local y Operaciones de Asistencia y Eventos - Versión 3
  */
 
-const STORAGE_KEYS = {
+function getColombiaDateString(date = new Date()) { const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date); const values = {}; parts.forEach(({ type, value }) => { values[type] = value; }); return values.year + '-' + values.month + '-' + values.day; }const STORAGE_KEYS = {
     STUDENTS: "tkd_innaedo_students_v3",
     ATTENDANCE: "tkd_innaedo_attendance_v4",
     EVENTS: "tkd_innaedo_events_v4",
@@ -23,7 +23,7 @@ const StorageManager = {
         if (!localStorage.getItem(STORAGE_KEYS.EVENTS)) {
             localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(INITIAL_EVENTS));
         }
-        if (!localStorage.getItem(STORAGE_KEYS.ADMIN_CREDS)) {
+        this.migrateColombiaAttendanceDate();        if (!localStorage.getItem(STORAGE_KEYS.ADMIN_CREDS)) {
             localStorage.setItem(STORAGE_KEYS.ADMIN_CREDS, JSON.stringify({
                 user: "admin",
                 pass: "taekwondo2025",
@@ -32,7 +32,7 @@ const StorageManager = {
         }
     },
 
-    // --- ALUMNOS ---
+    migrateColombiaAttendanceDate() { const colombiaToday = getColombiaDateString(); const utcToday = new Date().toISOString().split('T')[0]; if (colombiaToday === utcToday) return; const records = this.getAllAttendance(); if (!records[utcToday]) return; records[colombiaToday] = { ...records[utcToday], ...(records[colombiaToday] || {}) }; delete records[utcToday]; this.saveAllAttendance(records); },    // --- ALUMNOS ---
     getStudents(onlyActive = false) {
         try {
             const data = localStorage.getItem(STORAGE_KEYS.STUDENTS);
@@ -112,7 +112,7 @@ const StorageManager = {
         const newEvent = {
             id: "evt_" + Date.now(),
             title: eventData.title.trim(),
-            date: eventData.date || new Date().toISOString().split('T')[0],
+            date: eventData.date || getColombiaDateString(),
             time: eventData.time || "06:00 PM",
             type: eventData.type || "evento", // "evento", "aviso", "suspension", "examen", "torneo"
             location: eventData.location || "Sede Principal Dojang",
@@ -355,7 +355,7 @@ const StorageManager = {
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement("a");
         const url = URL.createObjectURL(blob);
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getColombiaDateString();
         link.setAttribute("href", url);
         link.setAttribute("download", `asistencia_innaedo_${filterGroup}_${todayStr}.csv`);
         document.body.appendChild(link);
@@ -377,7 +377,7 @@ const StorageManager = {
 
         const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
         const link = document.createElement("a");
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getColombiaDateString();
         link.setAttribute("href", jsonString);
         link.setAttribute("download", `respaldo_innaedo_tkd_${todayStr}.json`);
         document.body.appendChild(link);
