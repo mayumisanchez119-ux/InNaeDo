@@ -7,7 +7,7 @@ const app = {
     state: {
         currentView: "public",
         currentAdminTab: "attendance",
-        attendanceDate: new Date().toISOString().split('T')[0],
+        attendanceDate: getColombiaDateString(),
         attendanceGroupFilter: "ALL",
         attendanceSearchQuery: "",
         currentDayAttendance: {},
@@ -649,13 +649,13 @@ const app = {
     changeAttendanceDate(deltaDays) {
         const curr = new Date(this.state.attendanceDate + "T12:00:00");
         curr.setDate(curr.getDate() + deltaDays);
-        const dateStr = curr.toISOString().split('T')[0];
+        const dateStr = getColombiaDateString(curr);
         document.getElementById('attendanceDatePicker').value = dateStr;
         this.handleDateChange(dateStr);
     },
 
     setAttendanceDateToday() {
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getColombiaDateString();
         document.getElementById('attendanceDatePicker').value = todayStr;
         this.handleDateChange(todayStr);
     },
@@ -897,7 +897,7 @@ const app = {
         document.getElementById('eventAdminFormId').value = '';
         document.getElementById('eventAdminTitle').value = '';
         document.getElementById('eventAdminType').value = 'evento';
-        document.getElementById('eventAdminDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('eventAdminDate').value = getColombiaDateString();
         document.getElementById('eventAdminTime').value = '06:00 PM';
         document.getElementById('eventAdminLocation').value = 'Sede Principal Dojang';
         document.getElementById('eventAdminDesc').value = '';
