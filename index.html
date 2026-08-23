@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taekwondo INNAEDO | Sistema Oficial de Asistencia, Eventos & Disciplina</title>
+    <meta name="description" content="Portal oficial de control de asistencia, eventos, novedades y consulta marcial del Club Taekwondo y Hapkido INNAEDO.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS (Fondo Claro) -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Barra de Navegación Principal -->
+    <nav class="navbar" id="mainNavbar">
+        <div class="nav-container">
+            <div class="nav-brand" onclick="app.showSection('public')">
+                <div class="logo-wrapper">
+                    <img src="assets/innaedo_logo.png" alt="Logo Taekwondo INNAEDO" class="nav-logo" onerror="this.src='assets/innaedo_badge.jpg'">
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">TAEKWONDO INNAEDO</span>
+                    <span class="brand-sub">GRUPO DE TAEKWONDO Y HAPKIDO</span>
+                </div>
+            </div>
+
+            <!-- Navegación Pública -->
+            <ul class="nav-menu" id="navPublicMenu">
+                <li><a href="#inicio" class="nav-link active" onclick="app.scrollToSection('inicio')"><i class="fas fa-home"></i> Inicio</a></li>
+                <li><a href="#eventos" class="nav-link" onclick="app.scrollToSection('eventos')"><i class="fas fa-calendar-star"></i> Eventos & Novedades</a></li>
+                <li><a href="#consulta" class="nav-link" onclick="app.scrollToSection('consulta')"><i class="fas fa-search"></i> Consultar Alumno</a></li>
+                <li><a href="#grupos" class="nav-link" onclick="app.scrollToSection('grupos')"><i class="fas fa-users"></i> Grupos & Sedes</a></li>
+                <li><a href="#honor" class="nav-link" onclick="app.scrollToSection('honor')"><i class="fas fa-trophy"></i> Cuadro de Honor</a></li>
+                <li><a href="#principios" class="nav-link" onclick="app.scrollToSection('principios')"><i class="fas fa-scroll"></i> Principios</a></li>
+            </ul>
+
+            <!-- Acciones de Usuario / Login -->
+            <div class="nav-actions">
+                <div id="authNavButtons">
+                    <button class="btn btn-primary btn-martial" id="btnLoginModal" onclick="app.openLoginModal()">
+                        <i class="fas fa-user-shield"></i>
+                        <span>Ingreso Instructores</span>
+                    </button>
+                </div>
+                <div id="adminNavSession" class="admin-session-badge" style="display: none;">
+                    <div class="admin-info">
+                        <span class="admin-role"><i class="fas fa-shield-alt"></i> Sabonim</span>
+                        <span class="admin-name" id="navAdminName">Instructor</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="app.logout()" title="Cerrar Sesión">
+                        <i class="fas fa-sign-out-alt"></i> Salir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenedor Principal de la Aplicación -->
+    <main class="main-content">
+        
+        <!-- ==========================================
+             SECCIÓN 1: VISTA PÚBLICA (TODO PÚBLICO)
+             ========================================== -->
+        <section id="publicView" class="view-section active">
+            
+            <!-- Hero Section con Fondo Claro -->
+            <header class="hero-section" id="inicio">
+                <div class="hero-overlay"></div>
+                <div class="hero-content">
+                    <div class="badge-pill martial-badge">
+                        <i class="fas fa-award"></i> Grupo de Taekwondo y Hapkido INNAEDO
+                    </div>
+                    <h1 class="hero-title">
+                        Formando Campeones en la <br>
+                        <span class="text-gradient">Vida y en el Deporte</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        <b>IN NAE DO:</b> El camino de la perseverancia, la disciplina y el autocontrol. Consulta aquí tu asistencia diaria, eventos especiales y novedades del Dojang.
+                    </p>
+
+                    <!-- Buscador Rápido de Alumno en Hero -->
+                    <div class="hero-search-box">
+                        <div class="search-input-wrapper">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="publicHeroSearchInput" placeholder="Escribe el nombre del alumno (ej. Andres, Karol, Dylan, Mateo...)" autocomplete="off" oninput="app.handlePublicSearch(this.value)">
+                            <button class="btn btn-clear-search" id="btnClearHeroSearch" onclick="app.clearPublicSearch()" style="display: none;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="search-dropdown-results" id="heroSearchResults"></div>
+                    </div>
+
+                    <!-- Estadísticas Rápidas del Dojang -->
+                    <div class="hero-stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon icon-blue"><i class="fas fa-user-ninja"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-number" id="publicTotalStudents">49</span>
+                                <span class="stat-label">Alumnos Activos</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon icon-red"><i class="fas fa-calendar-check"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-number" id="publicTotalEvents">3</span>
+                                <span class="stat-label">Próximos Eventos & Avisos</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon icon-gold"><i class="fas fa-fire"></i></div>
+                            <div class="stat-info">
+                                <span class="stat-number" id="publicGlobalAttendance">92%</span>
+                                <span class="stat-label">Asistencia Promedio</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- SECCIÓN NUEVA: PRÓXIMOS EVENTOS & NOVEDADES DEL DOJANG -->
+            <section class="section-container" id="eventos">
+                <div class="section-header">
+                    <span class="section-tag"><i class="fas fa-bullhorn"></i> Calendario Marcial & Avisos</span>
+                    <h2 class="section-title">Próximos Eventos & Novedades</h2>
+                    <p class="section-description">Entérate de las ceremonias especiales, exámenes, torneos, avisos de clase y confirma tu asistencia.</p>
+                </div>
+
+                <!-- Filtros de Eventos -->
+                <div class="event-filter-tabs">
+                    <button class="event-filter-btn active" onclick="app.filterPublicEvents('ALL', this)">
+                        <i class="fas fa-th-list"></i> Todos los Anuncios
+                    </button>
+                    <button class="event-filter-btn" onclick="app.filterPublicEvents('evento', this)">
+                        <i class="fas fa-trophy"></i> Eventos & Galas
+                    </button>
+                    <button class="event-filter-btn" onclick="app.filterPublicEvents('aviso', this)">
+                        <i class="fas fa-info-circle"></i> Avisos & Clases
+                    </button>
+                </div>
+
+                <!-- Grid de Tarjetas de Eventos -->
+                <div class="events-grid" id="publicEventsGrid">
+                    <!-- Generado dinámicamente por JS -->
+                </div>
+            </section>
+
+            <!-- Sección de Consulta Pública de Alumno -->
+            <section class="section-container" id="consulta">
+                <div class="section-header">
+                    <span class="section-tag"><i class="fas fa-id-card"></i> Portal de Alumnos y Padres</span>
+                    <h2 class="section-title">Consulta de Asistencia Individual</h2>
+                    <p class="section-description">Escribe tu nombre completo para consultar tu grado de cinturón, racha de clases consecutivas y porcentaje de constancia.</p>
+                </div>
+
+                <div class="student-lookup-card">
+                    <div class="lookup-input-bar">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="studentLookupInput" placeholder="Escribe tu nombre para consultar tu récord..." oninput="app.handleLookupInput(this.value)">
+                    </div>
+
+                    <div id="studentLookupResult" class="lookup-result-container">
+                        <div class="empty-lookup-state">
+                            <i class="fas fa-user-check martial-pulse-icon"></i>
+                            <p>Escribe tu nombre en el buscador superior para ver tu historial de asistencia.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección de Grupos y Horarios -->
+            <section class="section-container" id="grupos">
+                <div class="section-header">
+                    <span class="section-tag"><i class="fas fa-users-cog"></i> Categorías & Sedes</span>
+                    <h2 class="section-title">Grupos de Entrenamiento</h2>
+                    <p class="section-description">Programas formativos y de alto rendimiento de Taekwondo INNAEDO.</p>
+                </div>
+
+                <div class="groups-grid" id="publicGroupsGrid">
+                    <!-- Tarjetas de Grupos generadas dinámicamente -->
+                </div>
+            </section>
+
+            <!-- Sección de Cuadro de Honor / Top Asistencia -->
+            <section class="section-container" id="honor">
+                <div class="section-header">
+                    <span class="section-tag"><i class="fas fa-medal"></i> Reconocimiento al Compromiso</span>
+                    <h2 class="section-title">Cuadro de Honor del Mes</h2>
+                    <p class="section-description">Reconocimiento especial a los practicantes con mayor constancia, disciplina y asistencia al tatami.</p>
+                </div>
+
+                <div class="honor-roll-grid" id="honorRollGrid">
+                    <!-- Cards de Top alumnos generadas dinámicamente -->
+                </div>
+            </section>
+
+            <!-- Sección Filosofía & Principios Marciales -->
+            <section class="section-container" id="principios">
+                
+                <!-- 1. Principios del Taekwondo (5 Tenets) -->
+                <div class="philosophy-card mb-4">
+                    <div class="philosophy-header">
+                        <span class="korean-text">인내도 • TAEKWONDO 5대 정신</span>
+                        <h3>Los 5 Principios del Taekwondo</h3>
+                    </div>
+                    <div class="tenets-grid" id="tenetsGridContainer">
+                        <!-- Generado por JS -->
+                    </div>
+                </div>
+
+                <!-- 2. Principios del Dojang INNAEDO (6 Principios) -->
+                <div class="philosophy-card dojang-card-style">
+                    <div class="philosophy-header">
+                        <span class="korean-text" style="color: var(--innaedo-blue);">DOJANG INNAEDO</span>
+                        <h3>Los 6 Principios del Dojang</h3>
+                        <p class="text-secondary mt-2">Valores fundamentales que rigen el comportamiento y formación de nuestros alumnos dentro y fuera del tatami.</p>
+                    </div>
+                    <div class="dojang-principles-grid" id="dojangPrinciplesContainer">
+                        <!-- Generado por JS: Honor, Coraje, Disciplina, Lealtad, Obediencia, Amistad -->
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Footer Público -->
+            <footer class="public-footer">
+                <div class="footer-content">
+                    <div class="footer-brand">
+                        <img src="assets/innaedo_logo.png" alt="Logo Innaedo" class="footer-logo" onerror="this.src='assets/innaedo_badge.jpg'">
+                        <h4>Taekwondo INNAEDO</h4>
+                        <p>Grupo de Taekwondo y Hapkido. Forjando carácter, disciplina y excelencia marcial.</p>
+                    </div>
+                    <div class="footer-links">
+                        <h5>Acceso Rápido</h5>
+                        <ul>
+                            <li><a href="#inicio" onclick="app.scrollToSection('inicio')">Inicio</a></li>
+                            <li><a href="#eventos" onclick="app.scrollToSection('eventos')">Eventos & Novedades</a></li>
+                            <li><a href="#consulta" onclick="app.scrollToSection('consulta')">Consultar Asistencia</a></li>
+                            <li><a href="#grupos" onclick="app.scrollToSection('grupos')">Grupos & Sedes</a></li>
+                            <li><a href="#honor" onclick="app.scrollToSection('honor')">Cuadro de Honor</a></li>
+                            <li><a href="#principios" onclick="app.scrollToSection('principios')">Principios</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-admin">
+                        <h5>Área de Sabonimes</h5>
+                        <p>Acceso protegido para registro diario de asistencia y publicación de eventos.</p>
+                        <button class="btn btn-outline-primary btn-sm" onclick="app.openLoginModal()">
+                            <i class="fas fa-lock"></i> Panel Administrativo
+                        </button>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>© 2026 Taekwondo INNAEDO. Sistema Oficial de Control de Asistencia, Eventos y Disciplina. Todos los derechos reservados.</p>
+                </div>
+            </footer>
+        </section>
+
+
+        <!-- ===================================================================
+             SECCIÓN 2: PANEL PRIVADO DE INSTRUCTORES / ADMINISTRACIÓN
+             =================================================================== -->
+        <section id="adminView" class="view-section" style="display: none;">
+            
+            <!-- Barra Superior del Panel Administrativo -->
+            <div class="admin-topbar">
+                <div class="admin-topbar-left">
+                    <div class="admin-title-wrap">
+                        <h2><i class="fas fa-clipboard-check text-red"></i> Panel de Asistencia & Gestión INNAEDO</h2>
+                        <span class="admin-subtitle">Control de Clases, Eventos y Disciplina Marcial • Sabonim en sesión</span>
+                    </div>
+                </div>
+                <div class="admin-topbar-right">
+                    <button class="btn btn-outline-light btn-sm" onclick="app.showSection('public')">
+                        <i class="fas fa-eye"></i> Ver Portal Público
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="app.openAddStudentModal()">
+                        <i class="fas fa-user-plus"></i> Nuevo Alumno
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="app.logout()">
+                        <i class="fas fa-sign-out-alt"></i> Salir
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navegación por Pestañas del Panel Admin -->
+            <div class="admin-tabs-bar">
+                <button class="admin-tab active" data-tab="attendance" onclick="app.switchAdminTab('attendance')">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Toma de Asistencia</span>
+                </button>
+                <button class="admin-tab" data-tab="events" onclick="app.switchAdminTab('events')">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Eventos & Novedades (<span id="adminTabEventsCount">3</span>)</span>
+                </button>
+                <button class="admin-tab" data-tab="students" onclick="app.switchAdminTab('students')">
+                    <i class="fas fa-user-ninja"></i>
+                    <span>Gestión de Alumnos (<span id="adminTabStudentCount">49</span>)</span>
+                </button>
+                <button class="admin-tab" data-tab="reports" onclick="app.switchAdminTab('reports')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Historial & Reportes</span>
+                </button>
+                <button class="admin-tab" data-tab="settings" onclick="app.switchAdminTab('settings')">
+                    <i class="fas fa-cog"></i>
+                    <span>Configuración & Respaldos</span>
+                </button>
+            </div>
+
+            <!-- CONTENIDO DE PESTAÑAS ADMIN -->
+            <div class="admin-tab-content-wrapper">
+
+                <!-- 1. PESTAÑA: TOMA DE ASISTENCIA DIARIA -->
+                <div id="adminTabAttendance" class="admin-tab-pane active">
+                    
+                    <!-- Barra de Control de Fecha y Filtros -->
+                    <div class="attendance-control-panel">
+                        <div class="date-navigator-box">
+                            <button class="btn-icon" onclick="app.changeAttendanceDate(-1)" title="Día Anterior">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div class="date-input-group">
+                                <i class="fas fa-calendar-day"></i>
+                                <input type="date" id="attendanceDatePicker" onchange="app.handleDateChange(this.value)">
+                            </div>
+                            <button class="btn-icon" onclick="app.changeAttendanceDate(1)" title="Día Siguiente">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="app.setAttendanceDateToday()">
+                                Hoy
+                            </button>
+                        </div>
+
+                        <!-- Resumen en Vivo del Día -->
+                        <div class="attendance-live-summary">
+                            <div class="live-counter pill-green">
+                                <i class="fas fa-check-circle"></i> Presentes: <b id="dayCountPresent">0</b>
+                            </div>
+                            <div class="live-counter pill-red">
+                                <i class="fas fa-times-circle"></i> Ausentes: <b id="dayCountAbsent">0</b>
+                            </div>
+                            <div class="live-counter pill-yellow">
+                                <i class="fas fa-clock"></i> Tardanzas: <b id="dayCountLate">0</b>
+                            </div>
+                            <div class="live-counter pill-blue">
+                                <i class="fas fa-file-medical"></i> Excusas: <b id="dayCountExcused">0</b>
+                            </div>
+                        </div>
+
+                        <!-- Acciones Rápidas Masivas -->
+                        <div class="attendance-quick-actions">
+                            <button class="btn btn-sm btn-success" onclick="app.markAllCurrentGroup('presente')">
+                                <i class="fas fa-check-double"></i> Todos Presentes
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="app.markAllCurrentGroup('ausente')">
+                                <i class="fas fa-times"></i> Todos Ausentes
+                            </button>
+                            <button class="btn btn-sm btn-primary" onclick="app.saveCurrentAttendanceToast()">
+                                <i class="fas fa-save"></i> Guardar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Grupos para el pase de lista -->
+                    <div class="group-filter-pills" id="adminGroupFilterPills">
+                        <!-- Generado por JS -->
+                    </div>
+
+                    <!-- Buscador rápido dentro de la lista de asistencia -->
+                    <div class="attendance-search-row">
+                        <div class="search-input-wrapper-sm">
+                            <i class="fas fa-filter"></i>
+                            <input type="text" id="attendanceStudentFilterInput" placeholder="Filtrar alumno por nombre en esta lista..." oninput="app.filterAttendanceStudents(this.value)">
+                        </div>
+                        <div class="list-legend">
+                            <span class="legend-item"><span class="dot dot-green"></span> Presente (P)</span>
+                            <span class="legend-item"><span class="dot dot-red"></span> Ausente (A)</span>
+                            <span class="legend-item"><span class="dot dot-yellow"></span> Tardanza (T)</span>
+                            <span class="legend-item"><span class="dot dot-blue"></span> Excusa / Permiso (E)</span>
+                        </div>
+                    </div>
+
+                    <!-- Lista / Tabla Interactiva de Asistencia -->
+                    <div class="attendance-sheet-container">
+                        <div class="attendance-table-header">
+                            <div class="col-student">Alumno & Grado Oficial</div>
+                            <div class="col-group">Grupo / Sede</div>
+                            <div class="col-status">Estado de Asistencia</div>
+                            <div class="col-notes">Observaciones / Notas</div>
+                        </div>
+                        <div class="attendance-table-body" id="attendanceSheetList">
+                            <!-- Filas de Alumnos generadas dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. NUEVA PESTAÑA: GESTIÓN DE EVENTOS & NOVEDADES (ADMIN) -->
+                <div id="adminTabEvents" class="admin-tab-pane">
+                    <div class="students-crud-header">
+                        <div>
+                            <h3 class="font-bold text-blue" style="font-size: 1.25rem;"><i class="fas fa-calendar-alt text-red"></i> Publicación de Eventos y Novedades</h3>
+                            <p class="text-secondary text-sm">Gestiona el Hall de la Fama, avisos de suspensión de clases ("Hoy no hay clase"), torneos y exámenes.</p>
+                        </div>
+                        <div class="crud-actions">
+                            <button class="btn btn-primary" onclick="app.openAddEventModal()">
+                                <i class="fas fa-plus"></i> Publicar Nuevo Evento / Aviso
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Eventos en Admin -->
+                    <div class="crud-table-container">
+                        <table class="crud-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha & Hora</th>
+                                    <th>Título del Evento / Novedad</th>
+                                    <th>Tipo</th>
+                                    <th>Lugar</th>
+                                    <th>Confirmaciones (RSVP)</th>
+                                    <th class="text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminEventsTableBody">
+                                <!-- Filas de eventos -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. PESTAÑA: GESTIÓN DE ALUMNOS (CRUD) -->
+                <div id="adminTabStudents" class="admin-tab-pane">
+                    <div class="students-crud-header">
+                        <div class="crud-search-filters">
+                            <div class="search-input-wrapper-sm">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="crudSearchInput" placeholder="Buscar alumno..." oninput="app.renderStudentsCrudTable()">
+                            </div>
+                            <select id="crudGroupFilterSelect" class="form-select-sm" onchange="app.renderStudentsCrudTable()">
+                                <option value="ALL">Todos los Grupos</option>
+                                <option value="ADOLESCENTES">Adolescentes</option>
+                                <option value="NIÑOS 5 A 11">Niños (5 a 11 Años)</option>
+                                <option value="CINTURONES NEGROS">Cinturones Negros / Avanzados</option>
+                                <option value="BUGALAGRANDE">Bugalagrande</option>
+                                <option value="PROFESORES">Profesores</option>
+                                <option value="Ninguno">Ninguno</option>
+                            </select>
+                        </div>
+                        <div class="crud-actions">
+                            <button class="btn btn-primary" onclick="app.openAddStudentModal()">
+                                <i class="fas fa-plus"></i> Agregar Alumno
+                            </button>
+                            <button class="btn btn-outline-light" onclick="StorageManager.exportToCSV(document.getElementById('crudGroupFilterSelect').value)">
+                                <i class="fas fa-file-excel"></i> Exportar Lista
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Alumnos -->
+                    <div class="crud-table-container">
+                        <table class="crud-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Nombre del Alumno</th>
+                                    <th>Grupo Asignado</th>
+                                    <th>Cinturón / Grado</th>
+                                    <th>Asistencias</th>
+                                    <th>% Cumplimiento</th>
+                                    <th>Racha</th>
+                                    <th>Estado</th>
+                                    <th class="text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="crudStudentsTableBody">
+                                <!-- Filas de alumnos -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 4. PESTAÑA: HISTORIAL Y REPORTES -->
+                <div id="adminTabReports" class="admin-tab-pane">
+                    <div class="reports-header-cards">
+                        <div class="report-metric-card">
+                            <div class="metric-icon icon-blue"><i class="fas fa-users"></i></div>
+                            <div class="metric-body">
+                                <span class="metric-val" id="repTotalStudents">0</span>
+                                <span class="metric-title">Total Alumnos Activos</span>
+                            </div>
+                        </div>
+                        <div class="report-metric-card">
+                            <div class="metric-icon icon-green"><i class="fas fa-check-circle"></i></div>
+                            <div class="metric-body">
+                                <span class="metric-val" id="repTotalPresents">0</span>
+                                <span class="metric-title">Asistencias Totales Registradas</span>
+                            </div>
+                        </div>
+                        <div class="report-metric-card">
+                            <div class="metric-icon icon-yellow"><i class="fas fa-calendar-alt"></i></div>
+                            <div class="metric-body">
+                                <span class="metric-val" id="repTotalClasses">0</span>
+                                <span class="metric-title">Días de Entrenamiento</span>
+                            </div>
+                        </div>
+                        <div class="report-metric-card">
+                            <div class="metric-icon icon-red"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div class="metric-body">
+                                <span class="metric-val" id="repAtRiskCount">0</span>
+                                <span class="metric-title">Alumnos en Riesgo (>3 Faltas)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Opciones de Reporte y Descarga -->
+                    <div class="reports-control-bar">
+                        <div class="reports-filters">
+                            <label>Filtrar Grupo para Reporte:</label>
+                            <select id="reportsGroupFilter" class="form-select-sm" onchange="app.renderReportsTable()">
+                                <option value="ALL">Todos los Grupos del Dojang</option>
+                                <option value="ADOLESCENTES">Adolescentes</option>
+                                <option value="NIÑOS 5 A 11">Niños (5 a 11 Años)</option>
+                                <option value="CINTURONES NEGROS">Cinturones Negros / Avanzados</option>
+                                <option value="BUGALAGRANDE">Bugalagrande</option>
+                                <option value="PROFESORES">Profesores</option>
+                            </select>
+                        </div>
+                        <div class="reports-buttons">
+                            <button class="btn btn-success" onclick="StorageManager.exportToCSV(document.getElementById('reportsGroupFilter').value)">
+                                <i class="fas fa-file-csv"></i> Descargar CSV / Excel
+                            </button>
+                            <button class="btn btn-outline-info" onclick="window.print()">
+                                <i class="fas fa-print"></i> Imprimir Planilla
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Métricas Detallada -->
+                    <div class="crud-table-container">
+                        <table class="crud-table">
+                            <thead>
+                                <tr>
+                                    <th>Alumno</th>
+                                    <th>Grupo</th>
+                                    <th>Cinturón / Grado</th>
+                                    <th>Sesiones</th>
+                                    <th>Presentes</th>
+                                    <th>Tardanzas</th>
+                                    <th>Excusas</th>
+                                    <th>Faltas</th>
+                                    <th>% Cumplimiento</th>
+                                    <th>Racha</th>
+                                    <th>Estado de Alerta</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportsTableBody">
+                                <!-- Filas de reporte -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 5. PESTAÑA: CONFIGURACIÓN & RESPALDOS -->
+                <div id="adminTabSettings" class="admin-tab-pane">
+                    <div class="settings-grid">
+                        
+                        <!-- Tarjeta de Cambio de Contraseña -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <i class="fas fa-key text-yellow"></i>
+                                <h3>Seguridad y Clave de Acceso</h3>
+                            </div>
+                            <p class="text-muted">Actualiza el usuario y contraseña para el acceso al panel administrativo.</p>
+                            
+                            <form id="formChangePassword" onsubmit="app.handleChangePassword(event)">
+                                <div class="form-group">
+                                    <label>Nombre del Sabonim / Instructor:</label>
+                                    <input type="text" id="settingInstructorName" class="form-input" placeholder="Nombre completo" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Usuario:</label>
+                                    <input type="text" id="settingUsername" class="form-input" placeholder="Usuario de acceso" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Contraseña Actual:</label>
+                                    <input type="password" id="settingCurrentPass" class="form-input" placeholder="Contraseña actual" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Nueva Contraseña:</label>
+                                    <input type="password" id="settingNewPass" class="form-input" placeholder="Mínimo 4 caracteres" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Guardar Nueva Clave
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Tarjeta de Copias de Seguridad (Backup) -->
+                        <div class="settings-card">
+                            <div class="settings-card-header">
+                                <i class="fas fa-database text-blue"></i>
+                                <h3>Copia de Seguridad & Restauración</h3>
+                            </div>
+                            <p class="text-muted">Exporta todos los datos del Dojang (alumnos, asistencias, eventos y notas) a un archivo de respaldo seguro.</p>
+                            
+                            <div class="backup-actions">
+                                <button class="btn btn-outline-primary btn-block mb-3" onclick="StorageManager.exportBackupJSON()">
+                                    <i class="fas fa-download"></i> Descargar Respaldo Completo (JSON)
+                                </button>
+
+                                <div class="import-box">
+                                    <label class="font-bold mb-2 block">Restaurar Respaldo desde Archivo JSON:</label>
+                                    <input type="file" id="backupFileInput" accept=".json" class="form-input mb-2" onchange="app.handleImportJSON(event)">
+                                </div>
+
+                                <div class="danger-zone mt-4">
+                                    <h4><i class="fas fa-radiation-alt text-red"></i> Zona de Restablecimiento</h4>
+                                    <p class="text-muted text-sm">Restaura la lista original de alumnos con sus grados y eventos iniciales.</p>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="app.confirmResetData()">
+                                        <i class="fas fa-history"></i> Restablecer Datos Iniciales
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==========================================
+         MODALES Y VENTANAS EMERGENTES
+         ========================================== -->
+
+    <!-- Modal 1: Iniciar Sesión Instructores -->
+    <div class="modal-backdrop" id="modalLogin">
+        <div class="modal-card modal-martial">
+            <button class="modal-close-btn" onclick="app.closeModal('modalLogin')">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header text-center">
+                <div class="modal-logo-wrap">
+                    <img src="assets/innaedo_logo.png" alt="Logo" class="modal-logo" onerror="this.src='assets/innaedo_badge.jpg'">
+                </div>
+                <h2>Acceso Sabonim</h2>
+                <p class="text-muted">Panel administrativo de Taekwondo INNAEDO</p>
+            </div>
+            
+            <form id="formLogin" onsubmit="app.handleLoginSubmit(event)">
+                <div class="form-group">
+                    <label for="loginUsername"><i class="fas fa-user"></i> Usuario:</label>
+                    <input type="text" id="loginUsername" class="form-input" placeholder="Ingresa tu usuario" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword"><i class="fas fa-lock"></i> Contraseña:</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Ingresa tu contraseña" required autocomplete="current-password">
+                </div>
+
+                <div class="demo-credentials-hint" onclick="app.fillDemoCredentials()">
+                    <i class="fas fa-info-circle text-gold"></i>
+                    <span>Credenciales por defecto: <b>admin</b> / <b>taekwondo2025</b> (Clic para rellenar)</span>
+                </div>
+
+                <div id="loginErrorMessage" class="alert-box alert-danger" style="display: none;"></div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">
+                    <i class="fas fa-sign-in-alt"></i> Ingresar al Sistema
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Agregar / Editar Alumno -->
+    <div class="modal-backdrop" id="modalStudentForm">
+        <div class="modal-card">
+            <button class="modal-close-btn" onclick="app.closeModal('modalStudentForm')">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">
+                <h2 id="studentModalTitle"><i class="fas fa-user-ninja text-red"></i> Nuevo Alumno</h2>
+                <p class="text-muted">Ingresa los datos para registrar al alumno en el Dojang</p>
+            </div>
+
+            <form id="formStudent" onsubmit="app.handleSaveStudent(event)">
+                <input type="hidden" id="studentFormId" value="">
+                
+                <div class="form-group">
+                    <label for="studentFormName">Nombre Completo del Alumno:</label>
+                    <input type="text" id="studentFormName" class="form-input" placeholder="Ej. JUAN PEREZ" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-half">
+                        <label for="studentFormGroup">Grupo / Categoría:</label>
+                        <select id="studentFormGroup" class="form-input" required>
+                            <option value="ADOLESCENTES">Adolescentes</option>
+                            <option value="NIÑOS 5 A 11">Niños (5 a 11 Años)</option>
+                            <option value="CINTURONES NEGROS">Cinturones Negros / Avanzados</option>
+                            <option value="BUGALAGRANDE">Bugalagrande</option>
+                            <option value="PROFESORES">Profesores</option>
+                            <option value="Ninguno">Ninguno / General</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-half">
+                        <label for="studentFormBelt">Cinturón / Grado Oficial:</label>
+                        <select id="studentFormBelt" class="form-input" required>
+                            <option value="blanco">Blanco (10° Gup)</option>
+                            <option value="blanco-amarillo">Blanco Franja Amarilla (9° Gup)</option>
+                            <option value="amarillo">Amarillo (8° Gup)</option>
+                            <option value="amarillo-verde">Amarillo Franja Verde (7° Gup)</option>
+                            <option value="verde">Verde (6° Gup)</option>
+                            <option value="verde-azul">Verde Franja Azul (5° Gup)</option>
+                            <option value="azul">Azul (4° Gup)</option>
+                            <option value="azul-rojo">Azul Franja Roja (3° Gup)</option>
+                            <option value="rojo">Rojo (2° Gup)</option>
+                            <option value="rojo-punta-negra">Rojo Punta / Barra Negra (1° Gup Menores)</option>
+                            <option value="rojo-franja-negra">Rojo Franja Negra (1° Gup)</option>
+                            <option value="poom-1">1° Poom (Negro-Rojo Menores)</option>
+                            <option value="poom-2">2° Poom (Negro-Rojo Menores)</option>
+                            <option value="poom-3">3° Poom (Negro-Rojo Menores)</option>
+                            <option value="negro-1dan">Cinturón Negro 1° Dan</option>
+                            <option value="negro-2dan">Cinturón Negro 2° Dan</option>
+                            <option value="negro-3dan">Cinturón Negro 3° Dan</option>
+                            <option value="negro-4dan">Cinturón Negro 4° Dan (Maestro)</option>
+                            <option value="gran-master">Gran Master (Fundador)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="studentFormPhone">Teléfono / Contacto de Emergencia:</label>
+                    <input type="tel" id="studentFormPhone" class="form-input" placeholder="Ej. 312 345 6789 (Opcional)">
+                </div>
+
+                <div class="form-group">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="studentFormActive" checked>
+                        <span class="checkmark"></span>
+                        Alumno Activo en el Dojang
+                    </label>
+                </div>
+
+                <div class="modal-footer-buttons">
+                    <button type="button" class="btn btn-outline-light" onclick="app.closeModal('modalStudentForm')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="btnSaveStudentSubmit">
+                        <i class="fas fa-save"></i> Guardar Alumno
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 3: Confirmar Posible Asistencia a Evento (RSVP Alumno) -->
+    <div class="modal-backdrop" id="modalEventRsvp">
+        <div class="modal-card">
+            <button class="modal-close-btn" onclick="app.closeModal('modalEventRsvp')">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">
+                <span class="badge-pill martial-badge" style="margin-bottom: 0.5rem;"><i class="fas fa-ticket-alt"></i> Confirmación de Asistencia</span>
+                <h2 id="rsvpModalEventTitle" class="text-blue font-bold">Ceremonia Hall de la Fama</h2>
+                <p id="rsvpModalEventDetails" class="text-muted text-sm">29 de Agosto • Auditorio Principal</p>
+            </div>
+
+            <form id="formEventRsvp" onsubmit="app.handleSaveRsvp(event)">
+                <input type="hidden" id="rsvpEventId" value="">
+
+                <div class="form-group">
+                    <label for="rsvpStudentSelect"><i class="fas fa-user"></i> Selecciona tu Nombre de Alumno:</label>
+                    <select id="rsvpStudentSelect" class="form-input" required>
+                        <!-- Generado con la lista de alumnos -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-check-circle"></i> ¿Asistirás a este evento?</label>
+                    <div class="rsvp-choice-pills">
+                        <label class="rsvp-radio-card">
+                            <input type="radio" name="rsvpStatus" value="si" checked>
+                            <span class="rsvp-card-content pill-green">
+                                <i class="fas fa-check-circle"></i> ¡Sí, Asistiré!
+                            </span>
+                        </label>
+                        <label class="rsvp-radio-card">
+                            <input type="radio" name="rsvpStatus" value="talvez">
+                            <span class="rsvp-card-content pill-yellow">
+                                <i class="fas fa-question-circle"></i> Tentativo / En Duda
+                            </span>
+                        </label>
+                        <label class="rsvp-radio-card">
+                            <input type="radio" name="rsvpStatus" value="no">
+                            <span class="rsvp-card-content pill-red">
+                                <i class="fas fa-times-circle"></i> No podré asistir
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="rsvpNote"><i class="fas fa-comment-alt"></i> Observación / Acompañantes (Opcional):</label>
+                    <input type="text" id="rsvpNote" class="form-input" placeholder="Ej. Asistiré con acudiente / Dobok de gala">
+                </div>
+
+                <div class="modal-footer-buttons">
+                    <button type="button" class="btn btn-outline-light" onclick="app.closeModal('modalEventRsvp')">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Confirmar mi Asistencia
+                    </button>
+                </div>
+            </form>
+
+            <!-- Lista de Alumnos ya confirmados -->
+            <div class="mt-4 pt-3" style="border-top: 1.5px solid var(--border-color);">
+                <h4 class="font-bold text-sm text-secondary mb-2"><i class="fas fa-users text-red"></i> Alumnos que ya han confirmado asistencia:</h4>
+                <div id="rsvpCurrentListContainer" class="rsvp-attendees-chips">
+                    <!-- Chips de asistentes -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 4: Crear / Editar Evento o Novedad (Admin) -->
+    <div class="modal-backdrop" id="modalEventAdminForm">
+        <div class="modal-card">
+            <button class="modal-close-btn" onclick="app.closeModal('modalEventAdminForm')">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="modal-header">
+                <h2 id="eventAdminModalTitle"><i class="fas fa-calendar-plus text-red"></i> Publicar Evento / Aviso</h2>
+                <p class="text-muted">Crea novedades como el Hall de la Fama, avisos de clase ("Hoy no hay clase") o torneos</p>
+            </div>
+
+            <form id="formAdminEvent" onsubmit="app.handleSaveAdminEvent(event)">
+                <input type="hidden" id="eventAdminFormId" value="">
+
+                <div class="form-group">
+                    <label for="eventAdminTitle">Título del Evento o Novedad:</label>
+                    <input type="text" id="eventAdminTitle" class="form-input" placeholder="Ej. Ceremonia Hall de la Fama / Hoy no hay clase" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-half">
+                        <label for="eventAdminType">Tipo de Publicación:</label>
+                        <select id="eventAdminType" class="form-input" required>
+                            <option value="evento">🏆 Evento / Ceremonia</option>
+                            <option value="aviso">ℹ️ Aviso / Novedad General</option>
+                            <option value="suspension">⛔ Suspensión de Clase</option>
+                            <option value="examen">🥋 Examen de Grados</option>
+                            <option value="torneo">🥇 Torneo / Campeonato</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-half">
+                        <label for="eventAdminDate">Fecha:</label>
+                        <input type="date" id="eventAdminDate" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-half">
+                        <label for="eventAdminTime">Hora / Horario:</label>
+                        <input type="text" id="eventAdminTime" class="form-input" placeholder="Ej. 06:00 PM / Jornada habitual" value="06:00 PM">
+                    </div>
+                    <div class="form-group col-half">
+                        <label for="eventAdminLocation">Lugar / Sede:</label>
+                        <input type="text" id="eventAdminLocation" class="form-input" placeholder="Ej. Sede Central / Auditorio" value="Sede Principal Dojang">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventAdminDesc">Descripción y Detalles:</label>
+                    <textarea id="eventAdminDesc" class="form-input" rows="3" placeholder="Detalles para los alumnos y padres de familia..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="custom-checkbox">
+                        <input type="checkbox" id="eventAdminAllowRsvp" checked>
+                        <span class="checkmark"></span>
+                        Permitir que los alumnos confirmen asistencia a este evento
+                    </label>
+                </div>
+
+                <div class="modal-footer-buttons">
+                    <button type="button" class="btn btn-outline-light" onclick="app.closeModal('modalEventAdminForm')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Publicar Evento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
