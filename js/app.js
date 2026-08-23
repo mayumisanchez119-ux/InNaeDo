@@ -1249,5 +1249,5 @@ const app = {
 
 // Inicializar la aplicación
 document.addEventListener('DOMContentLoaded', () => {
-    app.init(); window.addEventListener('load', () => { setTimeout(() => { const section = document.getElementById('consulta'); if (section) { window.history.replaceState(null, '', '#consulta'); window.scrollTo({ top: section.getBoundingClientRect().top + window.scrollY - 80, behavior: 'auto' }); } }, 250); }, { once: true });
+    app.init(); window.addEventListener('load', () => { setTimeout(() => { const section = document.getElementById('consulta'); if (section) { window.history.replaceState(null, '', '#consulta'); this.scrollToSection('consulta'); } }, 250); }, { once: true });
 });
