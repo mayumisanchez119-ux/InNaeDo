@@ -123,7 +123,7 @@ const StorageManager = {
         };
         events.unshift(newEvent); // Al principio
         this.saveEvents(events);
-        return newEvent;
+        this.saveEventToCloud(newEvent); return newEvent;
     },
 
     updateEvent(id, updatedFields) {
@@ -132,7 +132,7 @@ const StorageManager = {
         if (idx !== -1) {
             events[idx] = { ...events[idx], ...updatedFields };
             this.saveEvents(events);
-            return events[idx];
+            this.saveEventToCloud(events[idx]); return events[idx];
         }
         return null;
     },
