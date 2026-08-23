@@ -37,7 +37,7 @@ const app = {
         this.renderReportsTable();
         this.loadSettingsForm();        // La consulta de alumnos es la pantalla de inicio del portal.        setTimeout(() => {            const defaultSection = document.getElementById('consulta');            if (defaultSection) {                window.history.replaceState(null, '', '#consulta');                defaultSection.scrollIntoView({ behavior: 'auto', block: 'start' });            }        }, 150);
 
-        document.addEventListener('click', (e) => {
+        setTimeout(() => { window.history.replaceState(null, '', '#consulta'); this.scrollToSection('consulta'); }, 500);        document.addEventListener('click', (e) => {
             const searchBox = document.querySelector('.hero-search-box');
             const results = document.getElementById('heroSearchResults');
             if (searchBox && results && !searchBox.contains(e.target)) {
