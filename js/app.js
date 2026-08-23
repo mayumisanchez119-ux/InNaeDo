@@ -24,9 +24,7 @@ const app = {
         this.loadDayAttendance(this.state.attendanceDate);
 
         this.checkAuthStatus();
-        this.renderPublicOverview();
-        this.renderPublicEvents();
-        this.renderPublicGroups();
+        this.renderPublicOverview(); this.renderPublicEvents(); StorageManager.syncEventsFromCloud().then(() => { this.renderPublicEvents(); this.renderAdminEventsTable(); }); this.renderPublicGroups();
         this.renderPublicHonorRoll();
         this.renderTenetsAndPrinciples();
 
