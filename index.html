@@ -360,8 +360,8 @@
                             <button class="btn btn-sm btn-outline-danger" onclick="app.markAllCurrentGroup('ausente')">
                                 <i class="fas fa-times"></i> Todos Ausentes
                             </button>
-                            <button class="btn btn-sm btn-primary" onclick="app.saveCurrentAttendanceToast()">
-                                <i class="fas fa-save"></i> Guardar
+                            <button class="btn btn-sm btn-outline-light" onclick="app.markNoClassToday()"><i class="fas fa-ban"></i> No hubo clase</button>            <button class="btn btn-sm btn-primary" onclick="app.saveCurrentAttendanceToast()">
+                                <i class="fas fa-save"></i> Guardar clase
                             </button>
                         </div>
                     </div>
@@ -595,7 +595,7 @@
                                     <input type="password" id="settingNewPass" class="form-input" placeholder="Mínimo 4 caracteres" required>
                                 </div>
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i> Guardar Nueva Clave
+                                    <i class="fas fa-save"></i> Guardar clase Nueva Clave
                                 </button>
                             </form>
                         </div>
@@ -746,7 +746,7 @@
                 <div class="modal-footer-buttons">
                     <button type="button" class="btn btn-outline-light" onclick="app.closeModal('modalStudentForm')">Cancelar</button>
                     <button type="submit" class="btn btn-primary" id="btnSaveStudentSubmit">
-                        <i class="fas fa-save"></i> Guardar Alumno
+                        <i class="fas fa-save"></i> Guardar clase Alumno
                     </button>
                 </div>
             </form>
@@ -897,8 +897,8 @@
 
     <!-- Scripts -->
     <script src="js/data.js?v=4"></script>
-    <script src="js/storage.js?v=7"></script>
+    <script src="js/storage.js?v=8"></script>
     <script src="js/auth.js?v=4"></script>
-    <script src="js/app.js?v=12"></script>
+    <script src="js/app.js?v=13"></script>
 </body>
 </html>
