@@ -787,7 +787,7 @@ const app = {
             });
         }
 
-        StorageManager.saveAttendanceForDate(this.state.attendanceDate, this.state.currentDayAttendance);
+        // Se guarda únicamente al confirmar la clase.
         this.updateLiveAttendanceCounters();
     },
 
@@ -796,7 +796,7 @@ const app = {
             this.state.currentDayAttendance[studentId] = { status: "presente", note: "" };
         }
         this.state.currentDayAttendance[studentId].note = note.trim();
-        StorageManager.saveAttendanceForDate(this.state.attendanceDate, this.state.currentDayAttendance);
+        // Se guarda únicamente al confirmar la clase.
     },
 
     markAllCurrentGroup(status) {
@@ -812,12 +812,12 @@ const app = {
             this.state.currentDayAttendance[s.id].status = status;
         });
 
-        StorageManager.saveAttendanceForDate(this.state.attendanceDate, this.state.currentDayAttendance);
+        // Se guarda únicamente al confirmar la clase.
         this.renderAttendanceSheet();
         this.showToast(`Marcados todos como "${status.toUpperCase()}"`, "success");
     },
 
-    updateLiveAttendanceCounters() {
+    updateLiveAttendanceCounters() {        if (Object.keys(this.state.currentDayAttendance).length === 0) {            const presentCounter = document.getElementById("dayCountPresent");            const absentCounter = document.getElementById("dayCountAbsent");            const lateCounter = document.getElementById("dayCountLate");            const excusedCounter = document.getElementById("dayCountExcused");            if (presentCounter) presentCounter.textContent = "0";            if (absentCounter) absentCounter.textContent = "0";            if (lateCounter) lateCounter.textContent = "0";            if (excusedCounter) excusedCounter.textContent = "0";            return;        }
         const students = StorageManager.getStudents(true);
         let present = 0, absent = 0, late = 0, excused = 0;
 
@@ -841,10 +841,7 @@ const app = {
         if (elE) elE.textContent = excused;
     },
 
-    saveCurrentAttendanceToast() {
-        StorageManager.saveAttendanceForDate(this.state.attendanceDate, this.state.currentDayAttendance);
-        this.showToast("¡Asistencia del día guardada exitosamente!", "success");
-    },
+    markNoClassToday() {        if (confirm("¿Marcar este día como día sin clase? Esta fecha no contará en los reportes.")) {            StorageManager.removeAttendanceForDate(this.state.attendanceDate);            this.state.currentDayAttendance = {};            this.renderAttendanceSheet();            this.showToast("Día marcado sin clase. No contará como asistencia ni ausencia.", "info");        }    },    saveCurrentAttendanceToast() {        if (Object.keys(this.state.currentDayAttendance).length === 0) {            this.showToast("No hay una clase marcada para guardar. Si no hubo entrenamiento, usa No hubo clase.", "info");            return;        }        StorageManager.saveAttendanceForDate(this.state.attendanceDate, this.state.currentDayAttendance);        this.showToast("Clase y asistencia guardadas correctamente.", "success");    },
 
     // ==========================================
     // ADMINISTRACIÓN DE EVENTOS & NOVEDADES (CRUD)
