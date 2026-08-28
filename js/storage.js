@@ -206,7 +206,7 @@ const StorageManager = {
         localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(attendanceObj));
     },
 
-    getAttendanceForDate(dateStr) {
+    hasAttendanceForDate(dateStr) { return Object.keys(this.getAttendanceForDate(dateStr)).length > 0; },    removeAttendanceForDate(dateStr) { const all = this.getAllAttendance(); delete all[dateStr]; this.saveAllAttendance(all); },    getAttendanceForDate(dateStr) {
         const all = this.getAllAttendance();
         return all[dateStr] || {};
     },
