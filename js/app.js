@@ -24,7 +24,7 @@ const app = {
         this.loadDayAttendance(this.state.attendanceDate);
 
         this.checkAuthStatus();
-        this.renderPublicOverview(); this.renderPublicEvents(); StorageManager.syncEventsFromCloud().then(() => { this.renderPublicEvents(); this.renderAdminEventsTable(); }); this.renderPublicGroups();
+        this.renderPublicOverview(); this.renderPublicEvents(); StorageManager.syncEventsFromCloud().then(() => { this.renderPublicEvents(); this.renderAdminEventsTable(); }); StorageManager.syncCloudForVisitors().then(() => { this.loadDayAttendance(this.state.attendanceDate); this.renderPublicOverview(); this.renderPublicGroups(); this.renderPublicHonorRoll(); this.renderAttendanceSheet(); this.renderStudentsCrudTable(); this.renderReportsTable(); }); this.renderPublicGroups();
         this.renderPublicHonorRoll();
         this.renderTenetsAndPrinciples();
 
@@ -125,14 +125,22 @@ const app = {
         document.getElementById('loginPassword').value = user.pass;
     },
 
-    handleLoginSubmit(e) {
+    async handleLoginSubmit(e) {
         e.preventDefault();
         const username = document.getElementById('loginUsername').value;
         const pass = document.getElementById('loginPassword').value;
         const err = document.getElementById('loginErrorMessage');
 
-        const res = AuthManager.login(username, pass);
+        const res = await AuthManager.login(username, pass);
         if (res.success) {
+            await StorageManager.syncCloudAfterLogin();
+            this.loadDayAttendance(this.state.attendanceDate);
+            this.renderPublicOverview();
+            this.renderPublicGroups();
+            this.renderPublicHonorRoll();
+            this.renderAttendanceSheet();
+            this.renderStudentsCrudTable();
+            this.renderReportsTable();
             this.closeModal('modalLogin');
             this.checkAuthStatus();
             this.showSection('admin');
@@ -1044,14 +1052,14 @@ const app = {
         if (elUser) elUser.value = creds.user;
     },
 
-    handleChangePassword(e) {
+    async handleChangePassword(e) {
         e.preventDefault();
         const instructorName = document.getElementById('settingInstructorName').value;
         const username = document.getElementById('settingUsername').value;
         const currentPass = document.getElementById('settingCurrentPass').value;
         const newPass = document.getElementById('settingNewPass').value;
 
-        const res = AuthManager.updatePassword(currentPass, newPass, username, instructorName);
+        const res = await AuthManager.updatePassword(currentPass, newPass, username, instructorName);
         if (res.success) {
             this.showToast(res.message, "success");
             document.getElementById('settingCurrentPass').value = '';

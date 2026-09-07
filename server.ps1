@@ -5,6 +5,7 @@ if (-not $path) { $path = (Get-Location).Path }
 $listener = New-Object System.Net.HttpListener
 $prefix = "http://localhost:$port/"
 $listener.Prefixes.Add($prefix)
+$listener.Prefixes.Add("http://127.0.0.1:$port/")
 
 try {
     $listener.Start()
@@ -13,6 +14,7 @@ try {
     $prefix = "http://localhost:$port/"
     $listener = New-Object System.Net.HttpListener
     $listener.Prefixes.Add($prefix)
+    $listener.Prefixes.Add("http://127.0.0.1:$port/")
     $listener.Start()
 }
 

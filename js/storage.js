@@ -32,6 +32,134 @@ const StorageManager = {
         }
     },
 
+    getCloudAccessToken() {
+        return typeof AuthManager !== "undefined" ? AuthManager.getAccessToken() : null;
+    },
+
+    async cloudRequest(path, options = {}, requireInstructor = false) {
+        const token = this.getCloudAccessToken();
+        if (requireInstructor && !token) throw new Error("Debes iniciar sesión como Admin para guardar cambios.");
+        const headers = {
+            apikey: SUPABASE_EVENTS_KEY,
+            Authorization: "Bearer " + (token || SUPABASE_EVENTS_KEY),
+            ...(options.headers || {})
+        };
+        const response = await fetch(SUPABASE_EVENTS_URL + "/rest/v1/" + path, { ...options, headers });
+        if (!response.ok) throw new Error(await response.text());
+        return response;
+    },
+
+    studentToCloud(student) {
+        return {
+            id: student.id,
+            name: student.name,
+            group_name: student.group || "Ninguno",
+            belt: student.belt || "blanco",
+            phone: student.phone || "",
+            active: student.active !== false
+        };
+    },
+
+    studentFromCloud(row) {
+        return {
+            id: row.id,
+            name: row.name,
+            group: row.group_name || "Ninguno",
+            belt: row.belt || "blanco",
+            phone: row.phone || "",
+            active: row.active !== false,
+            createdAt: row.created_at
+        };
+    },
+
+    async upsertStudentsToCloud(students) {
+        if (!students.length) return true;
+        await this.cloudRequest("students?on_conflict=id", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
+            body: JSON.stringify(students.map(student => this.studentToCloud(student)))
+        }, true);
+        return true;
+    },
+
+    async syncStudentsFromCloud(uploadWhenEmpty = false) {
+        try {
+            const response = await this.cloudRequest("students?select=*&order=name.asc");
+            const rows = await response.json();
+            if (rows.length) {
+                const students = rows.map(row => this.studentFromCloud(row));
+                localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students));
+                return students;
+            }
+            const localStudents = this.getStudents();
+            if (uploadWhenEmpty && this.getCloudAccessToken()) await this.upsertStudentsToCloud(localStudents);
+            return localStudents;
+        } catch (error) {
+            console.error("No fue posible sincronizar los alumnos", error);
+            return this.getStudents();
+        }
+    },
+
+    attendanceRows(dateStr, records) {
+        return Object.entries(records).map(([studentId, record]) => ({
+            student_id: studentId,
+            attendance_date: dateStr,
+            status: record.status || "presente",
+            note: record.note || ""
+        }));
+    },
+
+    async upsertAttendanceForDate(dateStr, records) {
+        const rows = this.attendanceRows(dateStr, records);
+        if (!rows.length) return true;
+        await this.cloudRequest("attendance?on_conflict=student_id,attendance_date", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
+            body: JSON.stringify(rows)
+        }, true);
+        return true;
+    },
+
+    async syncAttendanceFromCloud(uploadWhenEmpty = false) {
+        try {
+            const response = await this.cloudRequest("attendance?select=*&order=attendance_date.asc");
+            const rows = await response.json();
+            if (rows.length) {
+                const attendance = {};
+                rows.forEach(row => {
+                    if (!attendance[row.attendance_date]) attendance[row.attendance_date] = {};
+                    attendance[row.attendance_date][row.student_id] = {
+                        status: row.status,
+                        note: row.note || "",
+                        updatedAt: row.updated_at
+                    };
+                });
+                localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(attendance));
+                return attendance;
+            }
+            const localAttendance = this.getAllAttendance();
+            if (uploadWhenEmpty && this.getCloudAccessToken()) {
+                for (const [dateStr, records] of Object.entries(localAttendance)) {
+                    await this.upsertAttendanceForDate(dateStr, records);
+                }
+            }
+            return localAttendance;
+        } catch (error) {
+            console.error("No fue posible sincronizar la asistencia", error);
+            return this.getAllAttendance();
+        }
+    },
+
+    async syncCloudAfterLogin() {
+        await this.syncStudentsFromCloud(true);
+        await this.syncAttendanceFromCloud(true);
+        await this.syncEventsFromCloud();
+    },
+
+    async syncCloudForVisitors() {
+        await Promise.all([this.syncStudentsFromCloud(false), this.syncAttendanceFromCloud(false)]);
+    },
+
     migrateColombiaAttendanceDate() { const colombiaToday = getColombiaDateString(); const utcToday = new Date().toISOString().split('T')[0]; if (colombiaToday === utcToday) return; const records = this.getAllAttendance(); if (!records[utcToday]) return; records[colombiaToday] = { ...records[utcToday], ...(records[colombiaToday] || {}) }; delete records[utcToday]; this.saveAllAttendance(records); },    // --- ALUMNOS ---
     getStudents(onlyActive = false) {
         try {
@@ -46,6 +174,9 @@ const StorageManager = {
 
     saveStudents(students) {
         localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(students));
+        if (this.getCloudAccessToken()) {
+            this.upsertStudentsToCloud(students).catch(error => console.error("No fue posible guardar los alumnos", error));
+        }
     },
 
     getStudentById(id) {
@@ -85,6 +216,10 @@ const StorageManager = {
         const students = this.getStudents();
         const filtered = students.filter(s => s.id !== id);
         this.saveStudents(filtered);
+        if (this.getCloudAccessToken()) {
+            this.cloudRequest("students?id=eq." + encodeURIComponent(id), { method: "DELETE" }, true)
+                .catch(error => console.error("No fue posible eliminar el alumno compartido", error));
+        }
     },
 
     /* Eventos sincronizados */ cloudEventRow(event) { return { id: event.id, title: event.title, event_date: event.date, event_time: event.time, event_type: event.type, location: event.location, description: event.description, allow_rsvp: event.allowRsvp !== false }; }, eventFromCloud(row) { return { id: row.id, title: row.title, date: row.event_date, time: row.event_time, type: row.event_type, location: row.location, description: row.description || '', allowRsvp: row.allow_rsvp !== false, rsvps: {}, createdAt: row.created_at }; }, async saveEventToCloud(event) { try { const response = await fetch(SUPABASE_EVENTS_URL + '/rest/v1/events?on_conflict=id', { method: 'POST', headers: { apikey: SUPABASE_EVENTS_KEY, Authorization: 'Bearer ' + SUPABASE_EVENTS_KEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify(this.cloudEventRow(event)) }); if (!response.ok) throw new Error(await response.text()); return true; } catch (error) { console.error('No fue posible sincronizar el evento', error); return false; } }, async deleteEventFromCloud(id) { try { const response = await fetch(SUPABASE_EVENTS_URL + '/rest/v1/events?id=eq.' + encodeURIComponent(id), { method: 'DELETE', headers: { apikey: SUPABASE_EVENTS_KEY, Authorization: 'Bearer ' + SUPABASE_EVENTS_KEY } }); return response.ok; } catch (error) { console.error('No fue posible eliminar el evento compartido', error); return false; } }, async syncEventsFromCloud() { try { const headers = { apikey: SUPABASE_EVENTS_KEY, Authorization: 'Bearer ' + SUPABASE_EVENTS_KEY }; let response = await fetch(SUPABASE_EVENTS_URL + '/rest/v1/events?select=*&order=event_date.asc', { headers }); if (!response.ok) throw new Error(await response.text()); let rows = await response.json(); const cloudIds = new Set(rows.map(row => row.id)); const localEvents = this.getEvents(); for (const event of localEvents) { if (!cloudIds.has(event.id)) await this.saveEventToCloud(event); } if (localEvents.some(event => !cloudIds.has(event.id))) { response = await fetch(SUPABASE_EVENTS_URL + '/rest/v1/events?select=*&order=event_date.asc', { headers }); rows = await response.json(); } const events = rows.map(row => this.eventFromCloud(row)); this.saveEvents(events); return events; } catch (error) { console.error('No fue posible cargar los eventos compartidos', error); return this.getEvents(); } },
@@ -206,7 +341,7 @@ const StorageManager = {
         localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(attendanceObj));
     },
 
-    hasAttendanceForDate(dateStr) { return Object.keys(this.getAttendanceForDate(dateStr)).length > 0; },    removeAttendanceForDate(dateStr) { const all = this.getAllAttendance(); delete all[dateStr]; this.saveAllAttendance(all); },    getAttendanceForDate(dateStr) {
+    hasAttendanceForDate(dateStr) { return Object.keys(this.getAttendanceForDate(dateStr)).length > 0; },    removeAttendanceForDate(dateStr) { const all = this.getAllAttendance(); delete all[dateStr]; this.saveAllAttendance(all); if (this.getCloudAccessToken()) { this.cloudRequest("attendance?attendance_date=eq." + encodeURIComponent(dateStr), { method: "DELETE" }, true).catch(error => console.error("No fue posible eliminar la asistencia compartida", error)); } },    getAttendanceForDate(dateStr) {
         const all = this.getAllAttendance();
         return all[dateStr] || {};
     },
@@ -215,6 +350,9 @@ const StorageManager = {
         const all = this.getAllAttendance();
         all[dateStr] = dateRecords;
         this.saveAllAttendance(all);
+        if (this.getCloudAccessToken()) {
+            this.upsertAttendanceForDate(dateStr, dateRecords).catch(error => console.error("No fue posible guardar la asistencia compartida", error));
+        }
     },
 
     // --- ESTADÍSTICAS Y CÁLCULOS ---
