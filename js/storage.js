@@ -120,30 +120,45 @@ const StorageManager = {
         return true;
     },
 
-    async syncAttendanceFromCloud(uploadWhenEmpty = false) {
+    async syncAttendanceFromCloud(uploadLocalOnly = false) {
         try {
             const response = await this.cloudRequest("attendance?select=*&order=attendance_date.asc");
             const rows = await response.json();
-            if (rows.length) {
-                const attendance = {};
-                rows.forEach(row => {
-                    if (!attendance[row.attendance_date]) attendance[row.attendance_date] = {};
-                    attendance[row.attendance_date][row.student_id] = {
-                        status: row.status,
-                        note: row.note || "",
-                        updatedAt: row.updated_at
-                    };
-                });
-                localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(attendance));
-                return attendance;
-            }
             const localAttendance = this.getAllAttendance();
-            if (uploadWhenEmpty && this.getCloudAccessToken()) {
-                for (const [dateStr, records] of Object.entries(localAttendance)) {
-                    await this.upsertAttendanceForDate(dateStr, records);
+            const cloudAttendance = {};
+            rows.forEach(row => {
+                if (!cloudAttendance[row.attendance_date]) cloudAttendance[row.attendance_date] = {};
+                cloudAttendance[row.attendance_date][row.student_id] = {
+                    status: row.status,
+                    note: row.note || "",
+                    updatedAt: row.updated_at
+                };
+            });
+
+            // La nube gana cuando el mismo alumno ya tiene un registro. Los registros
+            // locales que no existen aún en Supabase se conservan y se suben sin tocar
+            // los datos de otros grupos o profesores.
+            const mergedAttendance = { ...localAttendance };
+            Object.entries(cloudAttendance).forEach(([dateStr, cloudRecords]) => {
+                mergedAttendance[dateStr] = {
+                    ...(localAttendance[dateStr] || {}),
+                    ...cloudRecords
+                };
+            });
+            localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(mergedAttendance));
+
+            if (uploadLocalOnly && this.getCloudAccessToken()) {
+                for (const [dateStr, localRecords] of Object.entries(localAttendance)) {
+                    const cloudRecords = cloudAttendance[dateStr] || {};
+                    const missingRecords = Object.fromEntries(
+                        Object.entries(localRecords).filter(([studentId]) => !cloudRecords[studentId])
+                    );
+                    if (Object.keys(missingRecords).length) {
+                        await this.upsertAttendanceForDate(dateStr, missingRecords);
+                    }
                 }
             }
-            return localAttendance;
+            return mergedAttendance;
         } catch (error) {
             console.error("No fue posible sincronizar la asistencia", error);
             return this.getAllAttendance();
@@ -346,13 +361,21 @@ const StorageManager = {
         return all[dateStr] || {};
     },
 
-    saveAttendanceForDate(dateStr, dateRecords) {
+    async saveAttendanceForDate(dateStr, dateRecords) {
         const all = this.getAllAttendance();
-        all[dateStr] = dateRecords;
+        // Solo combina los alumnos que está guardando este profesor. Así, niños y
+        // adultos pueden registrar asistencia del mismo día desde equipos distintos.
+        all[dateStr] = { ...(all[dateStr] || {}), ...dateRecords };
         this.saveAllAttendance(all);
         if (this.getCloudAccessToken()) {
-            this.upsertAttendanceForDate(dateStr, dateRecords).catch(error => console.error("No fue posible guardar la asistencia compartida", error));
+            try {
+                await this.upsertAttendanceForDate(dateStr, dateRecords);
+            } catch (error) {
+                console.error("No fue posible guardar la asistencia compartida", error);
+                throw error;
+            }
         }
+        return all[dateStr];
     },
 
     // --- ESTADÍSTICAS Y CÁLCULOS ---

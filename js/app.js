@@ -849,7 +849,49 @@ const app = {
         if (elE) elE.textContent = excused;
     },
 
-    markNoClassToday() {        if (confirm("¿Marcar este día como día sin clase? Esta fecha no contará en los reportes.")) {            StorageManager.removeAttendanceForDate(this.state.attendanceDate);            this.state.currentDayAttendance = {};            this.renderAttendanceSheet();            this.showToast("Día marcado sin clase. No contará como asistencia ni ausencia.", "info");        }    },    saveCurrentAttendanceToast() {        const students = StorageManager.getStudents(true);        if (students.length === 0) {            this.showToast("No hay alumnos activos para guardar.", "info");            return;        }        students.forEach(student => {            if (!this.state.currentDayAttendance[student.id]) {                this.state.currentDayAttendance[student.id] = { status: "presente", note: "" };            }        });        StorageManager.saveAttendanceForDate(this.state.attendanceDate, this.state.currentDayAttendance);        this.showToast("Clase y asistencia guardadas correctamente.", "success");    },    // ==========================================
+    markNoClassToday() {
+        if (this.state.attendanceGroupFilter !== 'ALL') {
+            this.showToast("Para marcar un día sin clase, selecciona primero Todos los grupos.", "warning");
+            return;
+        }
+        if (confirm("¿Marcar este día como día sin clase? Esta fecha no contará en los reportes.")) {
+            StorageManager.removeAttendanceForDate(this.state.attendanceDate);
+            this.state.currentDayAttendance = {};
+            this.renderAttendanceSheet();
+            this.showToast("Día marcado sin clase. No contará como asistencia ni ausencia.", "info");
+        }
+    },
+
+    async saveCurrentAttendanceToast() {
+        if (this.state.attendanceGroupFilter === 'ALL') {
+            this.showToast("Selecciona el grupo de la clase antes de guardar. Esto protege la asistencia de los demás grupos.", "warning");
+            return;
+        }
+
+        const students = StorageManager.getStudents(true)
+            .filter(student => student.group === this.state.attendanceGroupFilter);
+        if (students.length === 0) {
+            this.showToast("No hay alumnos activos en este grupo para guardar.", "info");
+            return;
+        }
+
+        const groupRecords = {};
+        students.forEach(student => {
+            groupRecords[student.id] = this.state.currentDayAttendance[student.id] || {
+                status: "presente",
+                note: ""
+            };
+        });
+
+        try {
+            await StorageManager.saveAttendanceForDate(this.state.attendanceDate, groupRecords);
+            this.state.currentDayAttendance = StorageManager.getAttendanceForDate(this.state.attendanceDate);
+            this.showToast("Asistencia de este grupo guardada y sincronizada.", "success");
+        } catch (error) {
+            this.showToast("No se pudo sincronizar la asistencia. Revisa tu conexión e inténtalo de nuevo.", "error");
+        }
+    },
+    // ==========================================
     // GESTIÓN DE ALUMNOS (CRUD)
     // ==========================================
     renderStudentsCrudTable() {
