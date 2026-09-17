@@ -35,7 +35,14 @@ const app = {
         this.renderReportsTable();
         this.loadSettingsForm();        // La consulta de alumnos es la pantalla de inicio del portal.        setTimeout(() => {            const defaultSection = document.getElementById('consulta');            if (defaultSection) {                window.history.replaceState(null, '', '#consulta');                defaultSection.scrollIntoView({ behavior: 'auto', block: 'start' });            }        }, 150);
 
-        setTimeout(() => { window.history.replaceState(null, '', '#consulta'); this.scrollToSection('consulta'); }, 500);        setTimeout(() => { const section = document.getElementById('consulta'); if (section) { window.history.replaceState(null, '', '#consulta'); section.scrollIntoView({ behavior: 'auto', block: 'start' }); } }, 2200);        document.addEventListener('click', (e) => {
+        setTimeout(() => {
+            const section = document.getElementById('consulta');
+            if (section) {
+                window.history.replaceState(null, '', '#consulta');
+                section.scrollIntoView({ behavior: 'auto', block: 'start' });
+            }
+        }, 500);
+        document.addEventListener('click', (e) => {
             const searchBox = document.querySelector('.hero-search-box');
             const results = document.getElementById('heroSearchResults');
             if (searchBox && results && !searchBox.contains(e.target)) {
@@ -265,6 +272,117 @@ const app = {
         document.querySelectorAll('.event-filter-btn').forEach(b => b.classList.remove('active'));
         if (btnElement) btnElement.classList.add('active');
         this.renderPublicEvents();
+    },
+
+    // ─────────────────────────────────────────────────────────────────────
+    // ADMINISTRACIÓN DE EVENTOS
+    // ─────────────────────────────────────────────────────────────────────
+    renderAdminEventsTable() {
+        const tbody = document.getElementById('adminEventsTableBody');
+        if (!tbody) return;
+
+        const events = StorageManager.getEvents()
+            .slice()
+            .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+
+        if (!events.length) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No hay eventos publicados todavía.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = events.map(item => {
+            const rsvpCount = Object.keys(item.rsvps || {}).length;
+            const itemId = String(item.id).replace(/'/g, "\\'");
+            return `
+                <tr>
+                    <td><strong>${item.date || 'Sin fecha'}</strong><br><small class="text-muted">${item.time || ''}</small></td>
+                    <td><strong>${item.title || 'Sin título'}</strong><br><small class="text-muted">${item.description || ''}</small></td>
+                    <td>${item.type || 'Evento'}</td>
+                    <td>${item.location || '—'}</td>
+                    <td>${item.allowRsvp ? rsvpCount : 'No aplica'}</td>
+                    <td class="text-right">
+                        <button class="btn btn-sm btn-outline-primary" onclick="app.openEditEventModal('${itemId}')">Editar</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="app.deleteEvent('${itemId}')">Eliminar</button>
+                    </td>
+                </tr>`;
+        }).join('');
+    },
+
+    openAddEventModal() {
+        const form = document.getElementById('formAdminEvent');
+        if (form) form.reset();
+        document.getElementById('eventAdminModalTitle').textContent = 'Nuevo evento o novedad';
+        document.getElementById('eventAdminFormId').value = '';
+        document.getElementById('eventAdminDate').value = getColombiaDateString();
+        document.getElementById('eventAdminAllowRsvp').checked = true;
+        document.getElementById('modalEventAdminForm').classList.add('active');
+    },
+
+    openEditEventModal(id) {
+        const item = StorageManager.getEventById(id);
+        if (!item) {
+            this.showToast('No fue posible encontrar el evento.', 'error');
+            return;
+        }
+
+        document.getElementById('eventAdminModalTitle').textContent = 'Editar evento o novedad';
+        document.getElementById('eventAdminFormId').value = item.id;
+        document.getElementById('eventAdminTitle').value = item.title || '';
+        document.getElementById('eventAdminType').value = item.type || 'evento';
+        document.getElementById('eventAdminDate').value = item.date || '';
+        document.getElementById('eventAdminTime').value = item.time || '';
+        document.getElementById('eventAdminLocation').value = item.location || '';
+        document.getElementById('eventAdminDesc').value = item.description || '';
+        document.getElementById('eventAdminAllowRsvp').checked = Boolean(item.allowRsvp);
+        document.getElementById('modalEventAdminForm').classList.add('active');
+    },
+
+    async handleSaveAdminEvent(event) {
+        event.preventDefault();
+
+        const id = document.getElementById('eventAdminFormId').value;
+        const data = {
+            title: document.getElementById('eventAdminTitle').value.trim(),
+            type: document.getElementById('eventAdminType').value,
+            date: document.getElementById('eventAdminDate').value,
+            time: document.getElementById('eventAdminTime').value,
+            location: document.getElementById('eventAdminLocation').value.trim(),
+            description: document.getElementById('eventAdminDesc').value.trim(),
+            allowRsvp: document.getElementById('eventAdminAllowRsvp').checked
+        };
+
+        if (!data.title || !data.date) {
+            this.showToast('Indica al menos el título y la fecha del evento.', 'error');
+            return;
+        }
+
+        const saved = id ? StorageManager.updateEvent(id, data) : StorageManager.addEvent(data);
+        const synced = await StorageManager.saveEventToCloud(saved);
+        if (!synced) {
+            this.showToast('No fue posible sincronizar el evento con Supabase.', 'error');
+            return;
+        }
+
+        this.closeModal('modalEventAdminForm');
+        this.renderPublicEvents();
+        this.renderAdminEventsTable();
+        this.showToast(id ? 'Evento actualizado y sincronizado.' : 'Evento publicado y sincronizado.', 'success');
+    },
+
+    async deleteEvent(id) {
+        const item = StorageManager.getEventById(id);
+        if (!item || !confirm(`¿Eliminar "${item.title}"? Esta acción no se puede deshacer.`)) return;
+
+        const deleted = await StorageManager.deleteEventFromCloud(id);
+        if (!deleted) {
+            this.showToast('No fue posible eliminar el evento en Supabase.', 'error');
+            return;
+        }
+
+        StorageManager.deleteEvent(id);
+        this.renderPublicEvents();
+        this.renderAdminEventsTable();
+        this.showToast('Evento eliminado y sincronizado.', 'success');
     },
 
     // Modal RSVP Alumno
@@ -1184,5 +1302,14 @@ const app = {
 
 // Inicializar la aplicación
 document.addEventListener('DOMContentLoaded', () => {
-    app.init(); window.addEventListener('load', () => { setTimeout(() => { const section = document.getElementById('consulta'); if (section) { window.history.replaceState(null, '', '#consulta'); this.scrollToSection('consulta'); } }, 250); }, { once: true });
+    app.init();
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            const section = document.getElementById('consulta');
+            if (section) {
+                window.history.replaceState(null, '', '#consulta');
+                section.scrollIntoView({ behavior: 'auto', block: 'start' });
+            }
+        }, 250);
+    }, { once: true });
 });
