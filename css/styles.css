@@ -1903,6 +1903,27 @@ body {
     outline: none;
 }
 
+.class-history-panel {
+    background: #F8FAFC;
+    border: 1.5px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.class-history-heading h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1.15rem;
+}
+
+.class-history-heading p {
+    margin: 0 0 1rem;
+}
+
+.class-history-controls {
+    margin-bottom: 0.75rem;
+}
+
 .crud-table-container {
     background: #FFFFFF;
     border: 1.5px solid var(--border-color);
