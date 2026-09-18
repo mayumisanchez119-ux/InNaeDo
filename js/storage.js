@@ -356,7 +356,32 @@ const StorageManager = {
         localStorage.setItem(STORAGE_KEYS.ATTENDANCE, JSON.stringify(attendanceObj));
     },
 
-    hasAttendanceForDate(dateStr) { return Object.keys(this.getAttendanceForDate(dateStr)).length > 0; },    removeAttendanceForDate(dateStr) { const all = this.getAllAttendance(); delete all[dateStr]; this.saveAllAttendance(all); if (this.getCloudAccessToken()) { this.cloudRequest("attendance?attendance_date=eq." + encodeURIComponent(dateStr), { method: "DELETE" }, true).catch(error => console.error("No fue posible eliminar la asistencia compartida", error)); } },    getAttendanceForDate(dateStr) {
+    hasAttendanceForDate(dateStr) { return Object.keys(this.getAttendanceForDate(dateStr)).length > 0; },
+    removeAttendanceForDate(dateStr) { const all = this.getAllAttendance(); delete all[dateStr]; this.saveAllAttendance(all); if (this.getCloudAccessToken()) { this.cloudRequest("attendance?attendance_date=eq." + encodeURIComponent(dateStr), { method: "DELETE" }, true).catch(error => console.error("No fue posible eliminar la asistencia compartida", error)); } },
+
+    async removeAttendanceForClass(dateStr, studentIds) {
+        const ids = [...new Set(studentIds)].filter(Boolean);
+        if (!ids.length) return false;
+
+        // Primero se elimina en Supabase. Así no se borra localmente una clase
+        // que no pudo eliminarse de la fuente compartida.
+        const idsFilter = ids.map(id => encodeURIComponent(id)).join(',');
+        await this.cloudRequest(
+            "attendance?attendance_date=eq." + encodeURIComponent(dateStr) + "&student_id=in.(" + idsFilter + ")",
+            { method: "DELETE" },
+            true
+        );
+
+        const all = this.getAllAttendance();
+        const dayRecords = { ...(all[dateStr] || {}) };
+        ids.forEach(id => delete dayRecords[id]);
+        if (Object.keys(dayRecords).length) all[dateStr] = dayRecords;
+        else delete all[dateStr];
+        this.saveAllAttendance(all);
+        return true;
+    },
+
+    getAttendanceForDate(dateStr) {
         const all = this.getAllAttendance();
         return all[dateStr] || {};
     },

@@ -1204,6 +1204,193 @@ const app = {
                 </tr>
             `;
         }).join('');
+
+        this.refreshClassHistoryDates();
+    },
+
+    escapeReportText(value) {
+        return String(value ?? '').replace(/[&<>'"]/g, char => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        }[char]));
+    },
+
+    getRecordedClassGroups(dateStr) {
+        const records = StorageManager.getAttendanceForDate(dateStr);
+        const studentsById = new Map(StorageManager.getStudents().map(student => [student.id, student]));
+        return [...new Set(Object.keys(records)
+            .map(studentId => studentsById.get(studentId)?.group)
+            .filter(Boolean))]
+            .sort((a, b) => a.localeCompare(b, 'es'));
+    },
+
+    refreshClassHistoryDates() {
+        const dateSelect = document.getElementById('classHistoryDate');
+        if (!dateSelect) return;
+
+        const dates = Object.keys(StorageManager.getAllAttendance())
+            .filter(date => this.getRecordedClassGroups(date).length)
+            .sort()
+            .reverse();
+        const previousDate = dateSelect.value;
+
+        if (!dates.length) {
+            dateSelect.innerHTML = '<option value="">No hay clases registradas</option>';
+            const groupSelect = document.getElementById('classHistoryGroup');
+            if (groupSelect) groupSelect.innerHTML = '<option value="">Sin grupo</option>';
+            this.renderClassHistoryDetail();
+            return;
+        }
+
+        dateSelect.innerHTML = dates.map(date => `<option value="${date}">${date.split('-').reverse().join('/')}</option>`).join('');
+        dateSelect.value = dates.includes(previousDate) ? previousDate : dates[0];
+        this.refreshClassHistoryGroups();
+    },
+
+    refreshClassHistoryGroups() {
+        const dateSelect = document.getElementById('classHistoryDate');
+        const groupSelect = document.getElementById('classHistoryGroup');
+        if (!dateSelect || !groupSelect) return;
+
+        const groups = this.getRecordedClassGroups(dateSelect.value);
+        const previousGroup = groupSelect.value;
+        groupSelect.innerHTML = groups.length
+            ? groups.map(group => `<option value="${this.escapeReportText(group)}">${this.escapeReportText(group)}</option>`).join('')
+            : '<option value="">Sin grupo</option>';
+        if (groups.includes(previousGroup)) groupSelect.value = previousGroup;
+        this.renderClassHistoryDetail();
+    },
+
+    getSelectedClassHistory() {
+        const date = document.getElementById('classHistoryDate')?.value;
+        const group = document.getElementById('classHistoryGroup')?.value;
+        if (!date || !group) return null;
+
+        const records = StorageManager.getAttendanceForDate(date);
+        const students = StorageManager.getStudents()
+            .filter(student => student.group === group && records[student.id])
+            .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
+        return {
+            date,
+            group,
+            students: students.map(student => ({
+                student,
+                record: records[student.id]
+            }))
+        };
+    },
+
+    getAttendanceStatusLabel(status) {
+        return ({
+            presente: 'Presente',
+            ausente: 'Ausente',
+            tardanza: 'Tardanza',
+            excusa: 'Excusa / permiso'
+        })[status] || 'Ausente';
+    },
+
+    renderClassHistoryDetail() {
+        const tbody = document.getElementById('classHistoryTableBody');
+        const summary = document.getElementById('classHistorySummary');
+        if (!tbody || !summary) return;
+
+        const history = this.getSelectedClassHistory();
+        if (!history) {
+            summary.textContent = 'Aún no hay clases registradas para consultar.';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No hay registros de clase.</td></tr>';
+            return;
+        }
+
+        const attended = history.students.filter(({ record }) => ['presente', 'tardanza'].includes(record.status)).length;
+        const absent = history.students.filter(({ record }) => record.status === 'ausente').length;
+        summary.textContent = `${history.date.split('-').reverse().join('/')} · ${history.group}: ${attended} asistieron, ${absent} ausentes y ${history.students.length} alumnos registrados.`;
+
+        tbody.innerHTML = history.students.map(({ student, record }) => {
+            const belt = this.getBeltData(student.belt);
+            const attendedLabel = ['presente', 'tardanza'].includes(record.status) ? 'Sí' : 'No';
+            return `
+                <tr>
+                    <td><b>${this.escapeReportText(student.name)}</b></td>
+                    <td><span class="member-chip">${this.escapeReportText(student.group)}</span></td>
+                    <td>${this.escapeReportText(belt.name)}</td>
+                    <td>${this.getAttendanceStatusLabel(record.status)}</td>
+                    <td><b class="${attendedLabel === 'Sí' ? 'text-green' : 'text-red'}">${attendedLabel}</b></td>
+                    <td>${this.escapeReportText(record.note || '—')}</td>
+                </tr>`;
+        }).join('');
+    },
+
+    exportSelectedClassToExcel() {
+        const history = this.getSelectedClassHistory();
+        if (!history) {
+            this.showToast('Selecciona una clase registrada para exportar.', 'warning');
+            return;
+        }
+
+        const escapeXml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&apos;', '"': '&quot;'
+        }[char]));
+        const rows = [
+            ['Detalle de asistencia - Taekwondo INNAEDO'],
+            ['Fecha', history.date],
+            ['Grupo', history.group],
+            [],
+            ['Alumno', 'Grupo', 'Cinturón / Grado', 'Estado', '¿Asistió?', 'Observación']
+        ];
+
+        history.students.forEach(({ student, record }) => {
+            const belt = this.getBeltData(student.belt);
+            rows.push([
+                student.name,
+                student.group,
+                belt.name,
+                this.getAttendanceStatusLabel(record.status),
+                ['presente', 'tardanza'].includes(record.status) ? 'Sí' : 'No',
+                record.note || ''
+            ]);
+        });
+
+        const xmlRows = rows.map(row => `<Row>${row.map(cell => `<Cell><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`).join('')}</Row>`).join('');
+        const workbook = `<?xml version="1.0" encoding="UTF-8"?>
+            <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+                xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+                <Worksheet ss:Name="Detalle clase"><Table>${xmlRows}</Table></Worksheet>
+            </Workbook>`;
+        const blob = new Blob([workbook], { type: 'application/vnd.ms-excel;charset=utf-8' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        const safeGroup = history.group.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '_');
+        link.href = url;
+        link.download = `asistencia_detallada_${history.date}_${safeGroup}.xls`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+        this.showToast('Detalle exportado para abrir en Excel.', 'success');
+    },
+
+    async deleteSelectedClassRecords() {
+        const history = this.getSelectedClassHistory();
+        if (!history) {
+            this.showToast('Selecciona una clase registrada para eliminar.', 'warning');
+            return;
+        }
+
+        const studentIds = history.students.map(({ student }) => student.id);
+        if (!confirm(`¿Eliminar el registro de ${history.group} del ${history.date}? Se borrarán ${studentIds.length} registros de Supabase y no se puede deshacer.`)) return;
+
+        try {
+            await StorageManager.removeAttendanceForClass(history.date, studentIds);
+            if (this.state.attendanceDate === history.date) this.loadDayAttendance(history.date);
+            this.renderAttendanceSheet();
+            this.renderReportsTable();
+            this.renderPublicOverview();
+            this.renderPublicHonorRoll();
+            this.showToast('Clase eliminada y sincronizada correctamente.', 'success');
+        } catch (error) {
+            console.error('No fue posible eliminar la clase', error);
+            this.showToast('No se pudo eliminar la clase en Supabase. Inténtalo de nuevo.', 'error');
+        }
     },
 
     // ==========================================
