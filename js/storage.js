@@ -104,7 +104,7 @@ const StorageManager = {
         return Object.entries(records).map(([studentId, record]) => ({
             student_id: studentId,
             attendance_date: dateStr,
-            status: record.status || "presente",
+            status: record.status || "ausente",
             note: record.note || ""
         }));
     },

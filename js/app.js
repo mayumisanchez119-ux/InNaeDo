@@ -845,7 +845,9 @@ const app = {
         }
 
         listContainer.innerHTML = students.map(student => {
-            const record = this.state.currentDayAttendance[student.id] || { status: "presente", note: "" };
+            // Una clase nueva comienza con todos ausentes. Solo se cambia a
+            // presente, tardanza o excusa cuando el profesor lo indica.
+            const record = this.state.currentDayAttendance[student.id] || { status: "ausente", note: "" };
             const belt = this.getBeltData(student.belt);
 
             return `
@@ -897,7 +899,7 @@ const app = {
 
     setStudentAttendanceStatus(studentId, status) {
         if (!this.state.currentDayAttendance[studentId]) {
-            this.state.currentDayAttendance[studentId] = { status: "presente", note: "" };
+            this.state.currentDayAttendance[studentId] = { status: "ausente", note: "" };
         }
         this.state.currentDayAttendance[studentId].status = status;
         this.state.currentDayAttendance[studentId].updatedAt = new Date().toISOString();
@@ -919,7 +921,7 @@ const app = {
 
     setStudentAttendanceNote(studentId, note) {
         if (!this.state.currentDayAttendance[studentId]) {
-            this.state.currentDayAttendance[studentId] = { status: "presente", note: "" };
+            this.state.currentDayAttendance[studentId] = { status: "ausente", note: "" };
         }
         this.state.currentDayAttendance[studentId].note = note.trim();
         // Se guarda únicamente al confirmar la clase.
@@ -933,7 +935,7 @@ const app = {
 
         students.forEach(s => {
             if (!this.state.currentDayAttendance[s.id]) {
-                this.state.currentDayAttendance[s.id] = { status: "presente", note: "" };
+                this.state.currentDayAttendance[s.id] = { status: "ausente", note: "" };
             }
             this.state.currentDayAttendance[s.id].status = status;
         });
@@ -943,13 +945,16 @@ const app = {
         this.showToast(`Marcados todos como "${status.toUpperCase()}"`, "success");
     },
 
-    updateLiveAttendanceCounters() {        if (Object.keys(this.state.currentDayAttendance).length === 0) {            const presentCounter = document.getElementById("dayCountPresent");            const absentCounter = document.getElementById("dayCountAbsent");            const lateCounter = document.getElementById("dayCountLate");            const excusedCounter = document.getElementById("dayCountExcused");            if (presentCounter) presentCounter.textContent = "0";            if (absentCounter) absentCounter.textContent = "0";            if (lateCounter) lateCounter.textContent = "0";            if (excusedCounter) excusedCounter.textContent = "0";            return;        }
-        const students = StorageManager.getStudents(true);
+    updateLiveAttendanceCounters() {
+        let students = StorageManager.getStudents(true);
+        if (this.state.attendanceGroupFilter !== 'ALL') {
+            students = students.filter(student => student.group === this.state.attendanceGroupFilter);
+        }
         let present = 0, absent = 0, late = 0, excused = 0;
 
         students.forEach(s => {
             const rec = this.state.currentDayAttendance[s.id];
-            const status = rec ? rec.status : 'presente';
+            const status = rec ? rec.status : 'ausente';
             if (status === 'presente') present++;
             else if (status === 'ausente') absent++;
             else if (status === 'tardanza') late++;
@@ -996,7 +1001,7 @@ const app = {
         const groupRecords = {};
         students.forEach(student => {
             groupRecords[student.id] = this.state.currentDayAttendance[student.id] || {
-                status: "presente",
+                status: "ausente",
                 note: ""
             };
         });
