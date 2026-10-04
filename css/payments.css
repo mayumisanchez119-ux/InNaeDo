@@ -1,0 +1,12 @@
+.payments-filters { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 1rem; }
+.payments-entry-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; margin: 1.5rem 0; align-items: start; }
+.payments-entry-grid h3 { margin-bottom: 0.75rem; }
+.payments-entry-grid .btn { margin-top: 1rem; white-space: normal; }
+.payments-entry-grid textarea { line-height: 1.6; }
+#paymentReceiptCard[hidden] { display: none; }
+@media (max-width: 900px) {
+    .admin-topbar-right { flex-wrap: wrap; max-width: 100%; }
+    .payments-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .payments-entry-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) { .payments-filters { grid-template-columns: 1fr; } }
