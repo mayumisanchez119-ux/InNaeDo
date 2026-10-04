@@ -16,7 +16,7 @@
     
     <!-- Custom CSS (Fondo Claro) -->
     <link rel="stylesheet" href="css/styles.css?v=3">
-    <link rel="stylesheet" href="css/payments.css?v=1">
+    <link rel="stylesheet" href="css/payments.css?v=2">
 </head>
 <body>
     <!-- Barra de Navegación Principal -->
@@ -313,7 +313,7 @@
                 </button>
                 <button class="admin-tab" data-tab="payments" onclick="app.switchAdminTab('payments')">
                     <i class="fas fa-wallet"></i>
-                    <span>Mensualidades</span>
+                    <span>Mensualidades y cobros</span>
                 </button>
             </div>
 
@@ -612,26 +612,32 @@
 
                 <div id="adminTabPayments" class="admin-tab-pane">
                     <div class="students-crud-header">
-                        <div><h3 class="text-blue"><i class="fas fa-wallet"></i> Mensualidades</h3>
-                            <p class="text-muted">Registra los pagos y consulta los alumnos pendientes del mes.</p></div>
+                        <div><h3 class="text-blue"><i class="fas fa-wallet"></i> Mensualidades y otros cobros</h3>
+                            <p class="text-muted">Registra mensualidades, exámenes, seminarios, uniformes y otros pagos.</p></div>
                         <button type="button" class="btn btn-outline-info" onclick="PaymentsPanel.refresh()">Actualizar pagos</button>
                     </div>
                     <p id="paymentsSyncStatus" role="status" class="text-muted">Entra a esta sección para consultar los pagos.</p>
                     <div class="payments-filters">
                         <div class="form-group"><label for="paymentsSearch">Buscar alumno</label>
                             <input id="paymentsSearch" type="search" class="form-input" placeholder="Nombre del alumno..." oninput="PaymentsPanel.render()"></div>
-                        <div class="form-group"><label for="paymentsFilterMonth">Mes de mensualidad</label>
+                        <div class="form-group"><label for="paymentsFilterMonth">Mes a consultar</label>
                             <input id="paymentsFilterMonth" type="month" class="form-input" onchange="PaymentsPanel.render()"></div>
-                        <div class="form-group"><label for="paymentsStatusFilter">Estado</label>
+                        <div class="form-group"><label for="paymentsStatusFilter">Estado de mensualidad</label>
                             <select id="paymentsStatusFilter" class="form-input" onchange="PaymentsPanel.render()">
                                 <option value="ALL">Todos</option><option value="pending">Pendientes de pago</option><option value="paid">Con pago registrado</option>
                             </select></div>
                         <div class="form-group"><label for="paymentsGroupFilter">Grupo</label>
                             <select id="paymentsGroupFilter" class="form-input" onchange="PaymentsPanel.render()"><option value="ALL">Todos los grupos</option></select></div>
+                        <div class="form-group"><label for="paymentsTypeFilter">Tipo de cobro en historial</label>
+                            <select id="paymentsTypeFilter" class="form-input" onchange="PaymentsPanel.render()">
+                                <option value="ALL">Todos los cobros</option><option value="monthly">Mensualidad</option>
+                                <option value="exam">Examen</option><option value="seminar">Seminario</option>
+                                <option value="uniform">Uniforme</option><option value="other">Otro cobro</option>
+                            </select></div>
                     </div>
                     <p id="paymentsSummary" class="text-blue" aria-live="polite"></p>
                     <div class="crud-table-container"><table class="crud-table">
-                        <thead><tr><th>Alumno activo</th><th>Grupo</th><th>Estado del mes</th><th>Valor registrado</th><th>Acción</th></tr></thead>
+                        <thead><tr><th>Alumno activo</th><th>Grupo</th><th>Mensualidad del mes</th><th>Valor mensualidad</th><th>Acción</th></tr></thead>
                         <tbody id="paymentsStudentsBody"></tbody>
                     </table></div>
                     <div class="payments-entry-grid">
@@ -639,14 +645,25 @@
                             <h3>Registrar pago</h3>
                             <p id="paymentSelectedStudent" class="text-blue" aria-live="polite">Busca y selecciona un alumno en el listado.</p>
                             <form id="monthlyPaymentForm" onsubmit="PaymentsPanel.save(event)">
-                                <div class="form-group"><label for="paymentMonth">Mensualidad que está pagando</label>
+                                <div class="form-group"><label for="paymentType">Tipo de cobro</label>
+                                    <select id="paymentType" class="form-input" required onchange="PaymentsPanel.updateChargeForm()">
+                                        <option value="monthly">Mensualidad</option><option value="exam">Examen</option>
+                                        <option value="seminar">Seminario</option><option value="uniform">Uniforme</option><option value="other">Otro cobro</option>
+                                    </select></div>
+                                <div class="form-group"><label id="paymentMonthLabel" for="paymentMonth">Mensualidad que está pagando</label>
                                     <input id="paymentMonth" type="month" class="form-input" required></div>
+                                <div class="form-group"><label for="paymentDetail">Detalle del cobro <span id="paymentDetailHint">(opcional)</span></label>
+                                    <input id="paymentDetail" type="text" class="form-input" maxlength="200" placeholder="Ej. Examen de cinturón / seminario / uniforme talla 8"></div>
                                 <div class="form-group"><label for="paymentDate">Fecha de pago</label>
                                     <input id="paymentDate" type="date" class="form-input" required></div>
                                 <div class="form-group"><label for="paymentAmount">Valor recibido (pesos colombianos)</label>
                                     <input id="paymentAmount" type="number" inputmode="numeric" min="1" max="999999999999" step="1" class="form-input" placeholder="Ej. 80000" required></div>
+                                <div class="form-group"><label for="paymentMethod">Forma de pago</label>
+                                    <select id="paymentMethod" class="form-input" required>
+                                        <option value="">Selecciona la forma de pago</option><option value="cash">Efectivo</option><option value="transfer">Transferencia</option>
+                                    </select></div>
                                 <div class="form-group"><label for="paymentNote">Observación (opcional)</label>
-                                    <input id="paymentNote" type="text" class="form-input" maxlength="500" placeholder="Ej. Transferencia / efectivo"></div>
+                                    <input id="paymentNote" type="text" class="form-input" maxlength="500" placeholder="Información adicional del pago"></div>
                                 <button id="paymentSaveButton" type="submit" class="btn btn-primary" disabled>Guardar pago y generar comprobante</button>
                             </form>
                         </div>
@@ -659,9 +676,9 @@
                         </div>
                     </div>
                     <h3 class="text-blue">Historial de pagos del mes seleccionado</h3>
-                    <p class="text-muted">La búsqueda por alumno y el grupo también filtran este historial. Puedes volver a copiar cualquier comprobante.</p>
+                    <p class="text-muted">Filtra por alumno, grupo y tipo de cobro. Los otros cobros no marcan la mensualidad como pagada. Puedes volver a copiar cualquier comprobante.</p>
                     <div class="crud-table-container"><table class="crud-table">
-                        <thead><tr><th>Fecha de pago</th><th>Alumno</th><th>Mensualidad</th><th>Valor</th><th>Observación</th><th>Comprobante</th></tr></thead>
+                        <thead><tr><th>Fecha de pago</th><th>Alumno</th><th>Tipo de cobro</th><th>Mes</th><th>Detalle</th><th>Valor</th><th>Forma de pago</th><th>Observación</th><th>Comprobante</th></tr></thead>
                         <tbody id="paymentsHistoryBody"></tbody>
                     </table></div>
                 </div>
@@ -1001,6 +1018,6 @@
     <script src="js/storage.js?v=12"></script>
     <script src="js/auth.js?v=5"></script>
     <script src="js/app.js?v=20"></script>
-    <script src="js/payments.js?v=1"></script>
+    <script src="js/payments.js?v=2"></script>
 </body>
 </html>
