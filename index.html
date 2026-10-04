@@ -16,6 +16,7 @@
     
     <!-- Custom CSS (Fondo Claro) -->
     <link rel="stylesheet" href="css/styles.css?v=3">
+    <link rel="stylesheet" href="css/payments.css?v=1">
 </head>
 <body>
     <!-- Barra de Navegación Principal -->
@@ -310,6 +311,10 @@
                     <i class="fas fa-cog"></i>
                     <span>Configuración & Respaldos</span>
                 </button>
+                <button class="admin-tab" data-tab="payments" onclick="app.switchAdminTab('payments')">
+                    <i class="fas fa-wallet"></i>
+                    <span>Mensualidades</span>
+                </button>
             </div>
 
             <!-- CONTENIDO DE PESTAÑAS ADMIN -->
@@ -603,6 +608,62 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+
+                <div id="adminTabPayments" class="admin-tab-pane">
+                    <div class="students-crud-header">
+                        <div><h3 class="text-blue"><i class="fas fa-wallet"></i> Mensualidades</h3>
+                            <p class="text-muted">Registra los pagos y consulta los alumnos pendientes del mes.</p></div>
+                        <button type="button" class="btn btn-outline-info" onclick="PaymentsPanel.refresh()">Actualizar pagos</button>
+                    </div>
+                    <p id="paymentsSyncStatus" role="status" class="text-muted">Entra a esta sección para consultar los pagos.</p>
+                    <div class="payments-filters">
+                        <div class="form-group"><label for="paymentsSearch">Buscar alumno</label>
+                            <input id="paymentsSearch" type="search" class="form-input" placeholder="Nombre del alumno..." oninput="PaymentsPanel.render()"></div>
+                        <div class="form-group"><label for="paymentsFilterMonth">Mes de mensualidad</label>
+                            <input id="paymentsFilterMonth" type="month" class="form-input" onchange="PaymentsPanel.render()"></div>
+                        <div class="form-group"><label for="paymentsStatusFilter">Estado</label>
+                            <select id="paymentsStatusFilter" class="form-input" onchange="PaymentsPanel.render()">
+                                <option value="ALL">Todos</option><option value="pending">Pendientes de pago</option><option value="paid">Con pago registrado</option>
+                            </select></div>
+                        <div class="form-group"><label for="paymentsGroupFilter">Grupo</label>
+                            <select id="paymentsGroupFilter" class="form-input" onchange="PaymentsPanel.render()"><option value="ALL">Todos los grupos</option></select></div>
+                    </div>
+                    <p id="paymentsSummary" class="text-blue" aria-live="polite"></p>
+                    <div class="crud-table-container"><table class="crud-table">
+                        <thead><tr><th>Alumno activo</th><th>Grupo</th><th>Estado del mes</th><th>Valor registrado</th><th>Acción</th></tr></thead>
+                        <tbody id="paymentsStudentsBody"></tbody>
+                    </table></div>
+                    <div class="payments-entry-grid">
+                        <div class="settings-card">
+                            <h3>Registrar pago</h3>
+                            <p id="paymentSelectedStudent" class="text-blue" aria-live="polite">Busca y selecciona un alumno en el listado.</p>
+                            <form id="monthlyPaymentForm" onsubmit="PaymentsPanel.save(event)">
+                                <div class="form-group"><label for="paymentMonth">Mensualidad que está pagando</label>
+                                    <input id="paymentMonth" type="month" class="form-input" required></div>
+                                <div class="form-group"><label for="paymentDate">Fecha de pago</label>
+                                    <input id="paymentDate" type="date" class="form-input" required></div>
+                                <div class="form-group"><label for="paymentAmount">Valor recibido (pesos colombianos)</label>
+                                    <input id="paymentAmount" type="number" inputmode="numeric" min="1" max="999999999999" step="1" class="form-input" placeholder="Ej. 80000" required></div>
+                                <div class="form-group"><label for="paymentNote">Observación (opcional)</label>
+                                    <input id="paymentNote" type="text" class="form-input" maxlength="500" placeholder="Ej. Transferencia / efectivo"></div>
+                                <button id="paymentSaveButton" type="submit" class="btn btn-primary" disabled>Guardar pago y generar comprobante</button>
+                            </form>
+                        </div>
+                        <div id="paymentReceiptCard" class="settings-card" hidden>
+                            <h3>Comprobante para el alumno</h3>
+                            <p class="text-muted">Copia el mensaje y pégalo en WhatsApp o en el medio que utilices.</p>
+                            <label for="paymentReceipt">Mensaje del comprobante</label>
+                            <textarea id="paymentReceipt" class="form-input" rows="13" readonly></textarea>
+                            <button type="button" class="btn btn-success" onclick="PaymentsPanel.copyReceipt()"><i class="fas fa-copy"></i> Copiar comprobante</button>
+                        </div>
+                    </div>
+                    <h3 class="text-blue">Historial de pagos del mes seleccionado</h3>
+                    <p class="text-muted">La búsqueda por alumno y el grupo también filtran este historial. Puedes volver a copiar cualquier comprobante.</p>
+                    <div class="crud-table-container"><table class="crud-table">
+                        <thead><tr><th>Fecha de pago</th><th>Alumno</th><th>Mensualidad</th><th>Valor</th><th>Observación</th><th>Comprobante</th></tr></thead>
+                        <tbody id="paymentsHistoryBody"></tbody>
+                    </table></div>
                 </div>
 
                 <!-- 5. PESTAÑA: CONFIGURACIÓN & RESPALDOS -->
@@ -939,6 +1000,7 @@
     <script src="js/data.js?v=4"></script>
     <script src="js/storage.js?v=12"></script>
     <script src="js/auth.js?v=5"></script>
-    <script src="js/app.js?v=19"></script>
+    <script src="js/app.js?v=20"></script>
+    <script src="js/payments.js?v=1"></script>
 </body>
 </html>
