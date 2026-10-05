@@ -7,7 +7,7 @@ const students = [
 ];
 const fields = new Map();
 function field(id) {
-    if (!fields.has(id)) fields.set(id, { value: '', innerHTML: '', textContent: '', hidden: true, focus() {}, select() {}, addEventListener() {} });
+    if (!fields.has(id)) fields.set(id, { value: '', innerHTML: '', textContent: '', hidden: true, style: {}, focus() {}, select() {}, addEventListener() {} });
     return fields.get(id);
 }
 const toasts = [];
@@ -16,7 +16,7 @@ const ledger = new Map();
 const context = {
     console, Intl, Date, crypto: require('node:crypto').webcrypto,
     document: { getElementById: field, addEventListener() {} },
-    AuthManager: { isLoggedIn: () => true },
+    AuthManager: { isLoggedIn: () => true, ensureSession: async () => true },
     app: { escapeReportText: value => String(value), showToast: (...args) => toasts.push(args) },
     getColombiaDateString: () => '2026-10-04', confirm: () => true,
     StorageManager: {
@@ -83,6 +83,9 @@ async function run() {
     // Otro cobro no cambia el estado de mensualidad.
     panel.selectStudent('kid-1');
     field('paymentType').value = 'exam';
+    panel.updateChargeForm();
+    field('paymentDetailChoice').value = 'other';
+    panel.updateDetailChoice();
     field('paymentMethod').value = 'transfer';
     field('paymentDetail').value = 'Examen cinturón amarillo';
     field('paymentNote').value = 'Referencia 123';
@@ -114,6 +117,9 @@ async function run() {
     for (const type of ['seminar', 'uniform', 'other']) {
         panel.selectStudent('kid-1');
         field('paymentType').value = type;
+        panel.updateChargeForm();
+        field('paymentDetailChoice').value = 'other';
+        panel.updateDetailChoice();
         field('paymentMethod').value = 'cash';
         field('paymentDetail').value = 'Detalle de ' + type;
         field('paymentAmount').value = '40000';
@@ -123,6 +129,23 @@ async function run() {
     }
     await panel.refresh();
     assert.equal(panel.payments.length, 6);
+    // Detalles predefinidos no arrastran el texto de Otro.
+    panel.selectStudent('kid-1');
+    field('paymentDetailChoice').value = 'other';
+    panel.updateDetailChoice();
+    assert.equal(field('paymentOtherDetailGroup').hidden, false);
+    assert.equal(field('paymentDetail').disabled, false);
+    field('paymentDetail').value = 'No debe guardarse';
+    field('paymentDetailChoice').value = 'Uniforme';
+    panel.updateDetailChoice();
+    assert.equal(field('paymentDetail').value, '');
+    assert.equal(field('paymentDetail').disabled, true);
+    assert.equal(field('paymentOtherDetailGroup').hidden, true);
+    field('paymentMethod').value = 'cash';
+    field('paymentAmount').value = '45000';
+    await panel.save({ preventDefault() {} });
+    assert.equal([...ledger.values()].at(-1).charge_detail, 'Uniforme');
+    assert.match(field('paymentReceipt').value, /Detalle: Uniforme/);
     panel.clear();
     assert.equal(panel.payments.length, 0);
     assert.equal(field('paymentReceipt').value, '');
