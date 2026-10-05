@@ -25,6 +25,15 @@ const app = {
 
         this.checkAuthStatus();
         AuthManager.ensureSession().then(() => this.checkAuthStatus());
+        // Renueva antes de vencer mientras se trabaja y al volver de segundo plano.
+        const resumeSession = () => AuthManager.ensureSession().then(() => this.checkAuthStatus());
+        window.addEventListener('focus', resumeSession);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') resumeSession();
+        });
+        window.setInterval(() => {
+            if (document.visibilityState === 'visible') AuthManager.ensureSession();
+        }, 30000);
         this.renderPublicOverview(); this.renderPublicEvents(); StorageManager.syncEventsFromCloud().then(() => { this.renderPublicEvents(); this.renderAdminEventsTable(); }); StorageManager.syncCloudForVisitors().then(() => { this.loadDayAttendance(this.state.attendanceDate); this.renderPublicOverview(); this.renderPublicGroups(); this.renderPublicHonorRoll(); this.renderAttendanceSheet(); this.renderStudentsCrudTable(); this.renderReportsTable(); }); this.renderPublicGroups();
         this.renderPublicHonorRoll();
         this.renderTenetsAndPrinciples();
