@@ -13,8 +13,23 @@ const PaymentsPanel = {
     updateChargeForm() {
         const type = document.getElementById('paymentType').value;
         document.getElementById('paymentMonthLabel').textContent = type === 'monthly' ? 'Mensualidad que está pagando' : 'Mes al que corresponde el cobro';
-        document.getElementById('paymentDetail').required = type === 'other';
         document.getElementById('paymentDetailHint').textContent = type === 'other' ? '(obligatorio)' : '(opcional)';
+        const choice = document.getElementById('paymentDetailChoice');
+        // Compatible con el HTML anterior durante la publicación de los archivos.
+        if (!choice) return;
+        choice.value = type === 'other' ? 'other' : '';
+        this.updateDetailChoice();
+    },
+    updateDetailChoice() {
+        const choice = document.getElementById('paymentDetailChoice');
+        if (!choice) return;
+        const other = choice.value === 'other';
+        const detail = document.getElementById('paymentDetail');
+        document.getElementById('paymentOtherDetailGroup').hidden = !other;
+        document.getElementById('paymentOtherDetailGroup').style.display = other ? '' : 'none';
+        detail.disabled = !other;
+        detail.required = other;
+        if (!other) detail.value = '';
     },
 
     escape(value) { return app.escapeReportText(value); },
@@ -49,7 +64,7 @@ const PaymentsPanel = {
     },
 
     async open() {
-        if (!AuthManager.isLoggedIn()) return;
+        if (!await AuthManager.ensureSession()) return;
         await this.refresh();
     },
 
@@ -92,6 +107,7 @@ const PaymentsPanel = {
         for (const id of ['paymentAmount', 'paymentNote', 'paymentDetail', 'paymentMethod']) {
             document.getElementById(id).value = '';
         }
+        this.updateChargeForm();
         document.getElementById('paymentReceiptCard').hidden = true;
         document.getElementById('paymentSelectedStudent').textContent = 'Busca y selecciona un alumno en el listado.';
         this.render();
@@ -167,6 +183,7 @@ const PaymentsPanel = {
         document.getElementById('paymentAmount').value = '';
         document.getElementById('paymentNote').value = '';
         document.getElementById('paymentDetail').value = '';
+        this.updateChargeForm();
         document.getElementById('paymentMethod').value = '';
         document.getElementById('paymentAmount').focus();
     },
@@ -180,10 +197,14 @@ const PaymentsPanel = {
         const month = document.getElementById('paymentMonth').value;
         const chargeType = document.getElementById('paymentType').value;
         const paymentMethod = document.getElementById('paymentMethod').value;
-        const chargeDetail = document.getElementById('paymentDetail').value.trim();
+        const choice = document.getElementById('paymentDetailChoice');
+        const detailChoice = choice ? choice.value : 'other';
+        const validDetails = ['', 'Mensualidad', 'Examen de cinturón', 'Seminario', 'Uniforme', 'other'];
+        if (!validDetails.includes(detailChoice)) return app.showToast('Selecciona un detalle válido.', 'error');
+        const chargeDetail = detailChoice === 'other' ? document.getElementById('paymentDetail').value.trim() : detailChoice;
         if (!Object.hasOwn(this.chargeTypes, chargeType)) return app.showToast('Selecciona un tipo de cobro válido.', 'error');
         if (!Object.hasOwn(this.methods, paymentMethod)) return app.showToast('Selecciona efectivo o transferencia.', 'error');
-        if (chargeDetail.length > 200 || (chargeType === 'other' && !chargeDetail)) return app.showToast('Escribe el detalle del otro cobro (máximo 200 caracteres).', 'error');
+        if (chargeDetail.length > 200 || ((chargeType === 'other' || detailChoice === 'other') && !chargeDetail)) return app.showToast('Escribe el detalle del otro cobro (máximo 200 caracteres).', 'error');
         if (!student || student.active === false) return app.showToast('Selecciona un alumno activo.', 'error');
         if (!Number.isSafeInteger(amount) || amount <= 0 || amount > 999999999999) return app.showToast('Escribe un valor válido en pesos colombianos.', 'error');
         if (!/^\d{4}-\d{2}$/.test(month) || !/^\d{4}-\d{2}-\d{2}$/.test(paidOn) || paidOn > getColombiaDateString()) {
@@ -231,6 +252,7 @@ const PaymentsPanel = {
             document.getElementById('paymentAmount').value = '';
             document.getElementById('paymentNote').value = '';
             document.getElementById('paymentDetail').value = '';
+            this.updateChargeForm();
             document.getElementById('paymentMethod').value = '';
             app.showToast('Pago guardado. El comprobante está listo para copiar.', 'success');
         } catch (error) {

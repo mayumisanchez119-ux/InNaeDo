@@ -23,13 +23,9 @@ const StorageManager = {
         if (!localStorage.getItem(STORAGE_KEYS.EVENTS)) {
             localStorage.setItem(STORAGE_KEYS.EVENTS, JSON.stringify(INITIAL_EVENTS));
         }
-        this.migrateColombiaAttendanceDate();        if (!localStorage.getItem(STORAGE_KEYS.ADMIN_CREDS)) {
-            localStorage.setItem(STORAGE_KEYS.ADMIN_CREDS, JSON.stringify({
-                user: "admin",
-                pass: "taekwondo2025",
-                name: "Sabonim Principal"
-            }));
-        }
+        this.migrateColombiaAttendanceDate();
+        // Las credenciales de demostración ya no se usan: Supabase valida el acceso.
+        localStorage.removeItem(STORAGE_KEYS.ADMIN_CREDS);
     },
 
     getCloudAccessToken() {
@@ -37,6 +33,7 @@ const StorageManager = {
     },
 
     async cloudRequest(path, options = {}, requireInstructor = false) {
+        if (typeof AuthManager !== 'undefined') await AuthManager.ensureSession();
         const token = this.getCloudAccessToken();
         if (requireInstructor && !token) throw new Error("Debes iniciar sesión como Admin para guardar cambios.");
         const headers = {

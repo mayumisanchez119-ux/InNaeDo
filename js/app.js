@@ -24,6 +24,7 @@ const app = {
         this.loadDayAttendance(this.state.attendanceDate);
 
         this.checkAuthStatus();
+        AuthManager.ensureSession().then(() => this.checkAuthStatus());
         this.renderPublicOverview(); this.renderPublicEvents(); StorageManager.syncEventsFromCloud().then(() => { this.renderPublicEvents(); this.renderAdminEventsTable(); }); StorageManager.syncCloudForVisitors().then(() => { this.loadDayAttendance(this.state.attendanceDate); this.renderPublicOverview(); this.renderPublicGroups(); this.renderPublicHonorRoll(); this.renderAttendanceSheet(); this.renderStudentsCrudTable(); this.renderReportsTable(); }); this.renderPublicGroups();
         this.renderPublicHonorRoll();
         this.renderTenetsAndPrinciples();
@@ -114,7 +115,11 @@ const app = {
         }, 50);
     },
 
-    openLoginModal() {
+    async openLoginModal() {
+        if (await AuthManager.ensureSession()) {
+            await this.enterAdmin();
+            return;
+        }
         const modal = document.getElementById('modalLogin');
         const err = document.getElementById('loginErrorMessage');
         if (err) err.style.display = 'none';
@@ -138,19 +143,10 @@ const app = {
         const pass = document.getElementById('loginPassword').value;
         const err = document.getElementById('loginErrorMessage');
 
-        const res = await AuthManager.login(username, pass);
+        const res = await AuthManager.login(username, pass, Boolean(document.getElementById('loginRemember')?.checked));
         if (res.success) {
-            await StorageManager.syncCloudAfterLogin();
-            this.loadDayAttendance(this.state.attendanceDate);
-            this.renderPublicOverview();
-            this.renderPublicGroups();
-            this.renderPublicHonorRoll();
-            this.renderAttendanceSheet();
-            this.renderStudentsCrudTable();
-            this.renderReportsTable();
-            this.closeModal('modalLogin');
-            this.checkAuthStatus();
-            this.showSection('admin');
+            document.getElementById('loginPassword').value = '';
+            await this.enterAdmin();
             this.showToast(`¡Bienvenido Sabonim ${res.user.name}!`, "success");
         } else {
             if (err) {
@@ -160,9 +156,25 @@ const app = {
         }
     },
 
+    async enterAdmin() {
+        await StorageManager.syncCloudAfterLogin();
+        this.loadDayAttendance(this.state.attendanceDate);
+        this.renderPublicOverview();
+        this.renderPublicGroups();
+        this.renderPublicHonorRoll();
+        this.renderAttendanceSheet();
+        this.renderStudentsCrudTable();
+        this.renderReportsTable();
+        this.closeModal('modalLogin');
+        this.checkAuthStatus();
+        if (AuthManager.isLoggedIn()) this.showSection('admin');
+    },
+
     logout() {
         PaymentsPanel.clear();
         AuthManager.logout();
+        document.getElementById('loginPassword').value = '';
+        if (document.getElementById('loginRemember')) document.getElementById('loginRemember').checked = false;
         this.checkAuthStatus();
         this.showSection('public');
         this.showToast("Sesión cerrada correctamente", "info");
