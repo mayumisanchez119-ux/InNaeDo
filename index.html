@@ -652,8 +652,18 @@
                                     </select></div>
                                 <div class="form-group"><label id="paymentMonthLabel" for="paymentMonth">Mensualidad que está pagando</label>
                                     <input id="paymentMonth" type="month" class="form-input" required></div>
-                                <div class="form-group"><label for="paymentDetail">Detalle del cobro <span id="paymentDetailHint">(opcional)</span></label>
-                                    <input id="paymentDetail" type="text" class="form-input" maxlength="200" placeholder="Ej. Examen de cinturón / seminario / uniforme talla 8"></div>
+                                <div class="form-group"><label for="paymentDetailChoice">Detalle del cobro <span id="paymentDetailHint">(opcional)</span></label>
+                                    <select id="paymentDetailChoice" class="form-input" onchange="PaymentsPanel.updateDetailChoice()">
+                                        <option value="">Sin detalle</option>
+                                        <option value="Mensualidad">Mensualidad</option>
+                                        <option value="Examen de cinturón">Examen de cinturón</option>
+                                        <option value="Seminario">Seminario</option>
+                                        <option value="Uniforme">Uniforme</option>
+                                        <option value="other">Otro</option>
+                                    </select></div>
+                                <div class="form-group" id="paymentOtherDetailGroup" hidden>
+                                    <label for="paymentDetail">¿Cuál otro?</label>
+                                    <input id="paymentDetail" type="text" class="form-input" maxlength="200" placeholder="Escribe el detalle del cobro" disabled></div>
                                 <div class="form-group"><label for="paymentDate">Fecha de pago</label>
                                     <input id="paymentDate" type="date" class="form-input" required></div>
                                 <div class="form-group"><label for="paymentAmount">Valor recibido (pesos colombianos)</label>
@@ -782,6 +792,10 @@
                     <input type="password" id="loginPassword" class="form-input" placeholder="Ingresa tu contraseña" required autocomplete="current-password">
                 </div>
 
+                <div class="form-group">
+                    <label style="display:flex;align-items:center;gap:10px"><input type="checkbox" id="loginRemember"> Recordarme en este dispositivo</label>
+                    <p class="text-muted">Actívalo solo en tu dispositivo personal. Al pulsar Salir se olvidará el acceso.</p>
+                </div>
                 <div id="loginErrorMessage" class="alert-box alert-danger" style="display: none;"></div>
 
                 <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">
@@ -1015,9 +1029,9 @@
 
     <!-- Scripts -->
     <script src="js/data.js?v=4"></script>
-    <script src="js/storage.js?v=12"></script>
-    <script src="js/auth.js?v=5"></script>
-    <script src="js/app.js?v=20"></script>
-    <script src="js/payments.js?v=2"></script>
+    <script src="js/storage.js?v=13"></script>
+    <script src="js/auth.js?v=6"></script>
+    <script src="js/app.js?v=21"></script>
+    <script src="js/payments.js?v=3"></script>
 </body>
 </html>
